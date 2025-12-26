@@ -1,0 +1,69 @@
+@extends('website.layouts.main')
+
+@section('title', 'Report Abuse - ' . config('app.name'))
+
+@section('description', 'Report abusive or inappropriate content or behavior on our platform')
+
+@section('content')
+    <section class="section" style="padding-top: 100px;">
+        <div class="container">
+            <h1 class="section-title">Report Abuse</h1>
+            <p class="section-subtitle">
+                Help us maintain a safe and professional platform by reporting any abusive content or behavior
+            </p>
+
+            <div style="max-width: 800px; margin: 0 auto;">
+                <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: var(--shadow-md);">
+                    <p style="color: var(--text-light); line-height: 1.8; margin-bottom: 30px;">
+                        If you have encountered any abusive, inappropriate, or fraudulent content on our platform, 
+                        please fill out the form below. All reports are reviewed by our team and appropriate action will be taken.
+                    </p>
+
+                    @if(session('success'))
+                        <div style="padding: 15px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 6px; color: #155724; margin-bottom: 20px;">
+                            {{ session('success') }}
+                        </div>
+                    @endif
+
+                    @if($errors->any())
+                        <div style="padding: 15px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 6px; color: #721c24; margin-bottom: 20px;">
+                            <ul style="margin: 0; padding-left: 20px;">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    <form method="POST" action="{{ route('website.report-abuse.store') }}" style="display: flex; flex-direction: column; gap: 20px;">
+                        @csrf
+                        <div class="form-group">
+                            <label for="type">Type of Abuse</label>
+                            <select id="type" name="type" style="width: 100%; padding: 12px 16px; background-color: var(--bg-light); border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; font-size: 14px;" required>
+                                <option value="">Select type of abuse</option>
+                                <option value="fraud">Fraud</option>
+                                <option value="spam">Spam</option>
+                                <option value="inappropriate">Inappropriate Content</option>
+                                <option value="copyright">Copyright Infringement</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="url">URL (if applicable)</label>
+                            <input type="url" id="url" name="url" placeholder="Enter the URL of the abusive content">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Your Email</label>
+                            <input type="email" id="email" name="email" placeholder="Enter your email address" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Description</label>
+                            <textarea id="description" name="description" rows="6" style="width: 100%; padding: 12px 16px; background-color: var(--bg-light); border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; font-size: 14px; resize: vertical;" placeholder="Please provide a detailed description of the abuse" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="align-self: flex-start;">Submit Report</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+@endsection
