@@ -59,6 +59,20 @@ class CampaignsController extends Controller
     }
 
     /**
+     * Display the specified campaign.
+     *
+     * @param  int  $id
+     * @return \Illuminate\View\View
+     */
+    public function show($id)
+    {
+        $campaign = Campaign::with(['advertiser.user', 'targeting', 'campaignImpressions', 'campaignClicks'])
+            ->findOrFail($id);
+        
+        return view('dashboard.admin.campaigns.show', compact('campaign'));
+    }
+
+    /**
      * Approve campaign.
      *
      * @param  int  $id
@@ -125,5 +139,28 @@ class CampaignsController extends Controller
         $campaignService->resumeCampaign($campaign);
 
         return back()->with('success', 'Campaign resumed.');
+    }
+
+    /**
+     * Delete campaign.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function destroy($id)
+    {
+        $campaign = Campaign::findOrFail($id);
+        
+        // Check if campaign has spent any money
+        if ($campaign->total_spent > 0) {
+            return back()->withErrors(['error' => 'Cannot delete campaign that has spent money. Please pause or stop it instead.']);
+        }
+
+        // Delete campaign (cascade will handle related records)
+        $campaignName = $campaign->name;
+        $campaign->delete();
+
+        return redirect()->route('dashboard.admin.campaigns')
+            ->with('success', "Campaign '{$campaignName}' deleted successfully.");
     }
 }

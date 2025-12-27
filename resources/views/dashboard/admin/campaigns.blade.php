@@ -532,7 +532,7 @@
                             </td>
                             <td>
                                 <div class="action-buttons">
-                                    <a href="{{ route('dashboard.admin.campaigns.show', $campaign->id) ?? '#' }}" class="btn btn-sm btn-info" title="View Details">
+                                    <a href="{{ route('dashboard.admin.campaigns.show', $campaign->id) }}" class="btn btn-sm btn-info" title="View Details">
                                         <i class="fas fa-eye"></i>
                                     </a>
                                     @if($campaign->approval_status === 'pending')

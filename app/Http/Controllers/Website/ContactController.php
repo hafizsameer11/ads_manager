@@ -25,16 +25,31 @@ class ContactController extends Controller
      */
     public function store(Request $request)
     {
-        // Add validation and contact form handling logic here
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'subject' => 'required|string|max:255',
-            'message' => 'required|string',
+            'message' => 'required|string|min:10',
         ]);
 
-        // TODO: Add logic to send email or save to database
-        // Example: Mail::to(config('mail.admin_email'))->send(new ContactFormMail($validated));
+        // Create contact submission
+        $submission = \App\Models\ContactSubmission::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'subject' => $validated['subject'],
+            'message' => $validated['message'],
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
+        // Send email to admin
+        try {
+            $adminEmail = config('mail.admin_email', config('mail.from.address'));
+            \Illuminate\Support\Facades\Mail::to($adminEmail)->send(new \App\Mail\ContactFormMail($submission));
+        } catch (\Exception $e) {
+            // Log error but don't fail the request
+            \Log::error('Failed to send contact form email: ' . $e->getMessage());
+        }
 
         return redirect()->route('website.contact')
             ->with('success', 'Thank you for your message. We will get back to you soon!');

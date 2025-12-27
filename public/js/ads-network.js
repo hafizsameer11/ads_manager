@@ -1,6 +1,6 @@
 /**
  * Ads Network SDK
- * Version: 1.0.0
+ * Version: 1.1.0
  * 
  * This script handles ad serving, impression tracking, and click tracking
  * for publishers using the Ads Network platform.
@@ -9,11 +9,75 @@
 (function(window, document) {
     'use strict';
 
-    // Configuration
+    // Configuration - Auto-detect API URL from script source
     var CONFIG = {
-        apiUrl: window.ADS_NETWORK_API_URL || '{{API_URL}}',
-        version: '1.0.0',
-        timeout: 10000
+        apiUrl: (function() {
+            // Priority 1: Explicitly set API URL (for testing/debugging)
+            if (window.ADS_NETWORK_API_URL) {
+                return window.ADS_NETWORK_API_URL;
+            }
+            
+            // Priority 2: Auto-detect from current script location (most reliable)
+            // Find the script tag that loaded this SDK
+            var scripts = document.getElementsByTagName('script');
+            for (var i = scripts.length - 1; i >= 0; i--) {
+                var script = scripts[i];
+                var src = script.src || script.getAttribute('src');
+                if (src && src.indexOf('ads-network.js') !== -1) {
+                    // Extract base URL from script src
+                    // e.g., "https://example.com/js/ads-network.js" -> "https://example.com"
+                    var baseUrl = src.substring(0, src.lastIndexOf('/js/ads-network.js'));
+                    if (baseUrl) {
+                        return baseUrl;
+                    }
+                    // Fallback: remove filename only
+                    return src.substring(0, src.lastIndexOf('/'));
+                }
+            }
+            
+            // Priority 3: Use current page origin as fallback
+            return window.location.origin;
+        })(),
+        version: '1.1.0',
+        timeout: 10000,
+        debug: window.ADS_NETWORK_DEBUG || false
+    };
+    
+    // Log detected API URL in debug mode
+    if (CONFIG.debug) {
+        console.log('[Ads Network] API URL auto-detected:', CONFIG.apiUrl);
+    }
+
+    // Validation utilities
+    var validators = {
+        /**
+         * Validate unit code format (16 alphanumeric characters)
+         */
+        validateUnitCode: function(unitCode) {
+            if (!unitCode || typeof unitCode !== 'string') {
+                return { valid: false, error: 'Unit code is required' };
+            }
+            if (!/^[a-zA-Z0-9]{16}$/.test(unitCode)) {
+                return { valid: false, error: 'Invalid unit code format. Must be 16 alphanumeric characters' };
+            }
+            return { valid: true };
+        },
+
+        /**
+         * Validate container element
+         */
+        validateContainer: function(container) {
+            if (!container) {
+                return { valid: false, error: 'Container element is required' };
+            }
+            if (typeof container === 'string') {
+                container = document.querySelector(container);
+            }
+            if (!container || !(container instanceof HTMLElement)) {
+                return { valid: false, error: 'Container element not found' };
+            }
+            return { valid: true, container: container };
+        }
     };
 
     // Utility functions
@@ -104,39 +168,76 @@
      * Ad Manager Class
      */
     function AdManager(unitCode, container, options) {
+        // Validate unit code
+        var unitCodeValidation = validators.validateUnitCode(unitCode);
+        if (!unitCodeValidation.valid) {
+            this.logError(unitCodeValidation.error);
+            return;
+        }
+
+        // Validate container
+        var containerValidation = validators.validateContainer(container);
+        if (!containerValidation.valid) {
+            this.logError(containerValidation.error);
+            return;
+        }
+
         this.unitCode = unitCode;
-        this.container = typeof container === 'string' ? document.querySelector(container) : container;
+        this.container = containerValidation.container;
         this.options = options || {};
         this.impressionId = null;
         this.campaignId = null;
         this.adUnitId = null;
         this.adData = null;
         this.impressionTracked = false;
-        
-        if (!this.container) {
-            console.error('Ads Network: Container element not found');
-            return;
-        }
+        this.clickTracked = false;
+        this.errors = [];
         
         this.init();
     }
 
     AdManager.prototype = {
         /**
+         * Log error
+         */
+        logError: function(message) {
+            if (!this.errors) {
+                this.errors = [];
+            }
+            this.errors.push(message);
+            if (CONFIG.debug) {
+                console.error('[Ads Network]', message);
+            }
+        },
+
+        /**
+         * Log info
+         */
+        logInfo: function(message) {
+            if (CONFIG.debug) {
+                console.log('[Ads Network]', message);
+            }
+        },
+
+        /**
          * Initialize ad
          */
         init: function() {
             var self = this;
             
+            this.logInfo('Initializing ad unit: ' + this.unitCode);
+            
             // Load ad
             this.loadAd().then(function(adData) {
-                if (adData && adData.success) {
+                if (adData && adData.success && adData.data) {
+                    self.logInfo('Ad loaded successfully');
                     self.renderAd(adData.data);
                 } else {
+                    self.logError('No ad available');
                     self.showNoAd();
                 }
             }).catch(function(error) {
-                console.error('Ads Network: Failed to load ad', error);
+                self.logError('Failed to load ad: ' + (error.message || error));
                 self.showNoAd();
             });
         },
@@ -145,22 +246,29 @@
          * Load ad from API
          */
         loadAd: function() {
-            var url = CONFIG.apiUrl + '/api/ad/' + this.unitCode;
+            // Validate API URL
+            if (!CONFIG.apiUrl) {
+                return Promise.reject(new Error('API URL not configured'));
+            }
+
+            var url = CONFIG.apiUrl + '/api/ad/' + encodeURIComponent(this.unitCode);
             var visitorInfo = utils.getVisitorInfo();
             
             // Add query parameters
             var params = new URLSearchParams();
-            params.append('ref', visitorInfo.referrer);
-            params.append('ua', encodeURIComponent(visitorInfo.userAgent));
-            params.append('lang', visitorInfo.language);
-            params.append('sw', visitorInfo.screenWidth);
-            params.append('sh', visitorInfo.screenHeight);
+            params.append('ref', visitorInfo.referrer || '');
+            params.append('ua', encodeURIComponent(visitorInfo.userAgent || ''));
+            params.append('lang', visitorInfo.language || '');
+            params.append('sw', visitorInfo.screenWidth || 0);
+            params.append('sh', visitorInfo.screenHeight || 0);
             
             if (this.options.type) {
                 params.append('type', this.options.type);
             }
             
             url += '?' + params.toString();
+            
+            this.logInfo('Loading ad from: ' + url);
             
             return utils.request(url);
         },
@@ -387,8 +495,17 @@
          */
         trackClick: function(targetUrl) {
             if (!this.campaignId || !this.adUnitId) {
+                this.logError('Cannot track click: campaign or ad unit ID missing');
                 return;
             }
+
+            // Prevent double-click tracking
+            if (this.clickTracked) {
+                this.logInfo('Click already tracked, skipping');
+                return;
+            }
+
+            this.clickTracked = true;
             
             var url = CONFIG.apiUrl + '/api/ad/click';
             var data = {
@@ -397,6 +514,16 @@
                 impression_id: this.impressionId,
                 visitor_info: utils.getVisitorInfo()
             };
+            
+            // Store click ID in localStorage for conversion tracking
+            if (this.campaignId && typeof Storage !== 'undefined') {
+                try {
+                    localStorage.setItem('ads_network_click_id_' + this.campaignId, this.adUnitId);
+                    localStorage.setItem('ads_network_impression_id_' + this.campaignId, this.impressionId);
+                } catch (e) {
+                    // localStorage may be disabled
+                }
+            }
             
             // Track click
             utils.request(url, {
@@ -408,12 +535,12 @@
                     window.open(targetUrl, '_blank', 'noopener,noreferrer');
                 }
             }).catch(function(error) {
-                console.error('Ads Network: Failed to track click', error);
+                this.logError('Failed to track click: ' + (error.message || error));
                 // Still redirect even if tracking fails
                 if (targetUrl) {
                     window.open(targetUrl, '_blank', 'noopener,noreferrer');
                 }
-            });
+            }.bind(this));
         },
 
         /**
@@ -462,7 +589,10 @@
     // Expose API
     window.AdsNetwork = {
         init: initAd,
-        version: CONFIG.version
+        version: CONFIG.version,
+        config: CONFIG,
+        utils: utils,
+        validators: validators
     };
 
     // Auto-initialize on DOM ready

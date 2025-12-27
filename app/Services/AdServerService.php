@@ -175,7 +175,9 @@ class AdServerService
 
             // Check country targeting
             if ($targeting->countries && !empty($targeting->countries)) {
-                if (!in_array($countryCode, $targeting->countries)) {
+                // If country code is null (localhost/testing), skip country check
+                // In production, this would be set by GeoIP service
+                if ($countryCode !== null && !in_array($countryCode, $targeting->countries)) {
                     return false;
                 }
             }

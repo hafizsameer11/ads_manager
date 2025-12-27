@@ -11,6 +11,7 @@
         initSidebarToggle();
         initUserDropdown();
         initMobileMenu();
+        initAlertDismiss();
     });
 
     /**
@@ -128,17 +129,46 @@
     });
 
     /**
-     * Auto-hide Flash Messages
+     * Initialize Alert Dismiss Functionality
+     */
+    function initAlertDismiss() {
+        // Handle dismiss buttons
+        document.querySelectorAll('.alert .close, .alert [data-dismiss="alert"]').forEach(function(button) {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const alert = this.closest('.alert');
+                if (alert) {
+                    dismissAlert(alert);
+                }
+            });
+        });
+    }
+
+    /**
+     * Dismiss Alert with Animation
+     */
+    function dismissAlert(alert) {
+        alert.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
+        alert.style.opacity = '0';
+        alert.style.transform = 'translateY(-10px)';
+        
+        setTimeout(function() {
+            alert.remove();
+        }, 300);
+    }
+
+    /**
+     * Auto-hide Flash Messages (after 5 seconds)
      */
     const flashMessages = document.querySelectorAll('.alert, [role="alert"]');
     flashMessages.forEach(function(message) {
-        setTimeout(function() {
-            message.style.transition = 'opacity 0.5s';
-            message.style.opacity = '0';
+        // Only auto-hide if it doesn't have a close button (user can dismiss manually)
+        const hasCloseButton = message.querySelector('.close, [data-dismiss="alert"]');
+        if (!hasCloseButton) {
             setTimeout(function() {
-                message.remove();
-            }, 500);
-        }, 5000);
+                dismissAlert(message);
+            }, 5000);
+        }
     });
 })();
 

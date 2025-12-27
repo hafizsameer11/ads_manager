@@ -25,7 +25,6 @@ class ReportAbuseController extends Controller
      */
     public function store(Request $request)
     {
-        // Add validation and abuse report handling logic here
         $validated = $request->validate([
             'type' => 'required|string|in:fraud,spam,inappropriate,copyright,other',
             'url' => 'nullable|url|max:500',
@@ -33,8 +32,23 @@ class ReportAbuseController extends Controller
             'description' => 'required|string|min:10',
         ]);
 
-        // TODO: Add logic to save abuse report to database and notify admins
-        // Example: AbuseReport::create($validated);
+        // Create abuse report
+        $report = \App\Models\AbuseReport::create([
+            'type' => $validated['type'],
+            'url' => $validated['url'] ?? null,
+            'email' => $validated['email'],
+            'description' => $validated['description'],
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
+        // Send email to admin
+        try {
+            $adminEmail = config('mail.admin_email', config('mail.from.address'));
+            \Illuminate\Support\Facades\Mail::to($adminEmail)->send(new \App\Mail\AbuseReportMail($report));
+        } catch (\Exception $e) {
+            \Log::error('Failed to send abuse report email: ' . $e->getMessage());
+        }
 
         return redirect()->route('website.report-abuse')
             ->with('success', 'Thank you for your report. We will review it and take appropriate action.');

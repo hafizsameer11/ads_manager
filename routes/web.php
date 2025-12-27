@@ -116,6 +116,10 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'a
         Route::post('/websites/{id}/enable', [AdminWebsitesController::class, 'enable'])->name('websites.enable');
         Route::post('/websites/{id}/suspend', [AdminWebsitesController::class, 'suspend'])->name('websites.suspend');
         Route::get('/campaigns', [AdminCampaignsController::class, 'index'])->name('campaigns');
+        Route::get('/campaigns/{id}', [AdminCampaignsController::class, 'show'])->name('campaigns.show');
+        Route::get('/deposits', [\App\Http\Controllers\Dashboard\Admin\DepositsController::class, 'index'])->name('deposits');
+        Route::post('/deposits/{id}/approve', [\App\Http\Controllers\Dashboard\Admin\DepositsController::class, 'approve'])->name('deposits.approve');
+        Route::post('/deposits/{id}/reject', [\App\Http\Controllers\Dashboard\Admin\DepositsController::class, 'reject'])->name('deposits.reject');
         Route::get('/withdrawals', [AdminWithdrawalsController::class, 'index'])->name('withdrawals');
         Route::post('/withdrawals/{id}/approve', [AdminWithdrawalsController::class, 'approve'])->name('withdrawals.approve');
         Route::post('/withdrawals/{id}/reject', [AdminWithdrawalsController::class, 'reject'])->name('withdrawals.reject');
@@ -124,6 +128,7 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'a
         Route::post('/campaigns/{id}/reject', [AdminCampaignsController::class, 'reject'])->name('campaigns.reject');
         Route::post('/campaigns/{id}/pause', [AdminCampaignsController::class, 'pause'])->name('campaigns.pause');
         Route::post('/campaigns/{id}/resume', [AdminCampaignsController::class, 'resume'])->name('campaigns.resume');
+        Route::delete('/campaigns/{id}', [AdminCampaignsController::class, 'destroy'])->name('campaigns.destroy');
         Route::get('/reports', [ReportsController::class, 'index'])->name('reports');
         Route::get('/analytics/geo', [ReportsController::class, 'geo'])->name('analytics.geo');
         Route::get('/analytics/device', [ReportsController::class, 'device'])->name('analytics.device');

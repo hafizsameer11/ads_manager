@@ -14,6 +14,40 @@
             <h3 class="card-title">Campaign Details</h3>
         </div>
         <div class="card-body">
+            @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <div class="alert-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="alert-content">
+                        <strong><i class="fas fa-check"></i> Success!</strong>
+                        <p>{{ session('success') }}</p>
+                    </div>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            @endif
+
+            @if($errors->any())
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <div class="alert-icon">
+                        <i class="fas fa-exclamation-circle"></i>
+                    </div>
+                    <div class="alert-content">
+                        <strong><i class="fas fa-times-circle"></i> Error!</strong>
+                        <ul class="mb-0 mt-2" style="list-style: none; padding-left: 0;">
+                            @foreach($errors->all() as $error)
+                                <li style="padding: 4px 0;"><i class="fas fa-chevron-right" style="font-size: 10px; margin-right: 8px;"></i>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            @endif
+
             <form method="POST" action="{{ route('dashboard.advertiser.create-campaign.store') }}">
                 @csrf
                 
@@ -21,18 +55,25 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="name">Campaign Name *</label>
-                            <input type="text" id="name" name="name" class="form-control" placeholder="My Campaign Name" required>
+                            <input type="text" id="name" name="name" class="form-control @error('name') is-invalid @enderror" 
+                                   placeholder="My Campaign Name" value="{{ old('name') }}" required>
+                            @error('name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="ad_type">Ad Type *</label>
-                            <select id="ad_type" name="ad_type" class="form-control" required>
+                            <select id="ad_type" name="ad_type" class="form-control @error('ad_type') is-invalid @enderror" required>
                                 <option value="">Select Ad Type</option>
-                                <option value="banner">Banner</option>
-                                <option value="popup">Popup</option>
-                                <option value="popunder">Popunder</option>
+                                <option value="banner" {{ old('ad_type') == 'banner' ? 'selected' : '' }}>Banner</option>
+                                <option value="popup" {{ old('ad_type') == 'popup' ? 'selected' : '' }}>Popup</option>
+                                <option value="popunder" {{ old('ad_type') == 'popunder' ? 'selected' : '' }}>Popunder</option>
                             </select>
+                            @error('ad_type')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
                     <div class="col-md-6">

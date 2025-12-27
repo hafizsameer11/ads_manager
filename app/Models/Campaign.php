@@ -87,6 +87,14 @@ class Campaign extends Model
     }
 
     /**
+     * Get the conversions for the campaign.
+     */
+    public function conversions(): HasMany
+    {
+        return $this->hasMany(Conversion::class);
+    }
+
+    /**
      * Calculate CTR.
      */
     public function calculateCTR(): float

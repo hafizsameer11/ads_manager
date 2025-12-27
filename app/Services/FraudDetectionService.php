@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Click;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class FraudDetectionService
 {
@@ -60,13 +62,43 @@ class FraudDetectionService
      */
     public function isVpn(string $ip): bool
     {
-        // In production, use a VPN detection service/API like ipapi.co, ip2location, etc.
-        // For now, return false (implement with actual service)
+        // Skip local/private IPs
+        if ($this->isPrivateIp($ip)) {
+            return false;
+        }
         
         // Cache result for 24 hours
         return Cache::remember("vpn_check_{$ip}", 86400, function () use ($ip) {
-            // TODO: Implement actual VPN detection API call
-            // Example: $response = Http::get("https://ipapi.co/{$ip}/vpn/");
+            try {
+                // Try ipapi.co first (free tier available)
+                $response = \Illuminate\Support\Facades\Http::timeout(5)
+                    ->get("https://ipapi.co/{$ip}/json/");
+                
+                if ($response->successful()) {
+                    $data = $response->json();
+                    // Check if VPN/proxy indicators exist
+                    if (isset($data['vpn']) && $data['vpn'] === true) {
+                        return true;
+                    }
+                    if (isset($data['proxy']) && $data['proxy'] === true) {
+                        return true;
+                    }
+                }
+                
+                // Fallback: Check common VPN ASNs and hosting providers
+                if (isset($data['org'])) {
+                    $org = strtolower($data['org']);
+                    $vpnKeywords = ['vpn', 'proxy', 'hosting', 'datacenter', 'server'];
+                    foreach ($vpnKeywords as $keyword) {
+                        if (strpos($org, $keyword) !== false) {
+                            return true;
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                \Log::warning("VPN detection failed for IP {$ip}: " . $e->getMessage());
+            }
+            
             return false;
         });
     }
@@ -79,14 +111,45 @@ class FraudDetectionService
      */
     public function isProxy(string $ip): bool
     {
-        // In production, use a proxy detection service/API
-        // For now, return false (implement with actual service)
+        // Skip local/private IPs
+        if ($this->isPrivateIp($ip)) {
+            return false;
+        }
         
         // Cache result for 24 hours
         return Cache::remember("proxy_check_{$ip}", 86400, function () use ($ip) {
-            // TODO: Implement actual proxy detection API call
+            try {
+                // Use ipapi.co for proxy detection
+                $response = \Illuminate\Support\Facades\Http::timeout(5)
+                    ->get("https://ipapi.co/{$ip}/json/");
+                
+                if ($response->successful()) {
+                    $data = $response->json();
+                    // Check proxy indicators
+                    if (isset($data['proxy']) && $data['proxy'] === true) {
+                        return true;
+                    }
+                    if (isset($data['type']) && in_array(strtolower($data['type']), ['hosting', 'datacenter', 'proxy'])) {
+                        return true;
+                    }
+                }
+            } catch (\Exception $e) {
+                \Log::warning("Proxy detection failed for IP {$ip}: " . $e->getMessage());
+            }
+            
             return false;
         });
+    }
+
+    /**
+     * Check if IP is private/local.
+     *
+     * @param  string  $ip
+     * @return bool
+     */
+    protected function isPrivateIp(string $ip): bool
+    {
+        return !filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
     }
 
     /**

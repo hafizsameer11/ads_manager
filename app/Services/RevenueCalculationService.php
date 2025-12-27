@@ -8,6 +8,7 @@ use App\Models\Publisher;
 use App\Models\Impression;
 use App\Models\Click;
 use App\Models\Setting;
+use Illuminate\Support\Facades\Log;
 
 class RevenueCalculationService
 {
@@ -168,6 +169,15 @@ class RevenueCalculationService
         if ($earning > 0) {
             $publisher->increment('balance', $earning);
             $publisher->increment('total_earnings', $earning);
+            
+            // Process referral earnings
+            try {
+                $referralService = app(\App\Services\ReferralService::class);
+                $referralService->processPublisherReferralEarnings($publisher, $earning);
+            } catch (\Exception $e) {
+                // Log error but don't fail the transaction
+                \Log::error('Failed to process referral earnings: ' . $e->getMessage());
+            }
         }
     }
 
@@ -192,6 +202,15 @@ class RevenueCalculationService
         if ($earning > 0) {
             $publisher->increment('balance', $earning);
             $publisher->increment('total_earnings', $earning);
+            
+            // Process referral earnings
+            try {
+                $referralService = app(\App\Services\ReferralService::class);
+                $referralService->processPublisherReferralEarnings($publisher, $earning);
+            } catch (\Exception $e) {
+                // Log error but don't fail the transaction
+                \Log::error('Failed to process referral earnings: ' . $e->getMessage());
+            }
         }
     }
 

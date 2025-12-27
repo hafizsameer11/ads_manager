@@ -54,62 +54,114 @@ class WebsiteVerificationService
         $url = $this->normalizeDomain($website->domain);
         
         try {
+            // Log the URL being fetched for debugging
+            Log::info('Verifying website', [
+                'website_id' => $website->id,
+                'domain' => $website->domain,
+                'normalized_url' => $url,
+                'verification_code' => $website->verification_code,
+            ]);
+            
             // Fetch the website HTML
             $response = Http::timeout(10)
                 ->withHeaders([
                     'User-Agent' => 'Mozilla/5.0 (compatible; AdsNetworkBot/1.0; +https://' . config('app.url') . '/)',
+                    'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
                 ])
                 ->get($url);
 
             if (!$response->successful()) {
+                Log::warning('Website verification failed - HTTP error', [
+                    'url' => $url,
+                    'status' => $response->status(),
+                    'body' => substr($response->body(), 0, 200),
+                ]);
+                
                 return [
                     'verified' => false,
-                    'message' => 'Could not access website. Please ensure your website is accessible.',
+                    'message' => 'Could not access website (HTTP ' . $response->status() . '). Please ensure your website is accessible at: ' . $url,
                 ];
             }
 
             $html = $response->body();
             
-            // Check for the meta tag
-            $expectedMetaTag = sprintf(
-                '<meta name="ads-network-verification" content="%s">',
-                $website->verification_code
-            );
+            // Log HTML snippet for debugging (first 500 chars)
+            Log::info('Website HTML fetched', [
+                'url' => $url,
+                'html_length' => strlen($html),
+                'html_preview' => substr($html, 0, 500),
+            ]);
             
-            $expectedMetaTagAlt = sprintf(
-                '<meta name="ads-network-verification" content=\'%s\'>',
-                $website->verification_code
-            );
+            // More flexible pattern matching - handles various formats
+            $verificationCode = preg_quote($website->verification_code, '/');
+            
+            // Pattern 1: Standard format with double quotes
+            $pattern1 = '/<meta\s+name\s*=\s*["\']ads-network-verification["\']\s+content\s*=\s*["\']' . $verificationCode . '["\']\s*\/?>/i';
+            
+            // Pattern 2: Single quotes
+            $pattern2 = '/<meta\s+name\s*=\s*[\'"]ads-network-verification[\'"]\s+content\s*=\s*[\'"]' . $verificationCode . '[\'"]\s*\/?>/i';
+            
+            // Pattern 3: No quotes around name
+            $pattern3 = '/<meta\s+name\s*=\s*ads-network-verification\s+content\s*=\s*["\']' . $verificationCode . '["\']\s*\/?>/i';
+            
+            // Pattern 4: Very flexible - any order, any spacing
+            $pattern4 = '/<meta[^>]*name\s*=\s*["\']?ads-network-verification["\']?[^>]*content\s*=\s*["\']?' . $verificationCode . '["\']?[^>]*>/i';
+            
+            // Also check simple string match
+            $hasMetaTag = preg_match($pattern1, $html) || 
+                         preg_match($pattern2, $html) || 
+                         preg_match($pattern3, $html) || 
+                         preg_match($pattern4, $html) ||
+                         strpos($html, 'ads-network-verification') !== false && strpos($html, $website->verification_code) !== false;
 
-            // Also check without quotes (some CMS might strip them)
-            $pattern = sprintf(
-                '/<meta\s+name=["\']?ads-network-verification["\']?\s+content=["\']?%s["\']?\s*\/?>/i',
-                preg_quote($website->verification_code, '/')
-            );
+            if ($hasMetaTag) {
+                // Double check - extract meta tags and verify
+                preg_match_all('/<meta[^>]*>/i', $html, $metaTags);
+                foreach ($metaTags[0] as $metaTag) {
+                    if (stripos($metaTag, 'ads-network-verification') !== false && 
+                        stripos($metaTag, $website->verification_code) !== false) {
+                        
+                        $website->update([
+                            'verification_status' => 'verified',
+                            'verified_at' => now(),
+                        ]);
 
-            if (preg_match($pattern, $html) || 
-                strpos($html, $expectedMetaTag) !== false || 
-                strpos($html, $expectedMetaTagAlt) !== false) {
-                
-                $website->update([
-                    'verification_status' => 'verified',
-                    'verified_at' => now(),
-                ]);
+                        Log::info('Website verified successfully', [
+                            'website_id' => $website->id,
+                            'verification_code' => $website->verification_code,
+                        ]);
 
-                return [
-                    'verified' => true,
-                    'message' => 'Website verified successfully!',
-                ];
+                        return [
+                            'verified' => true,
+                            'message' => 'Website verified successfully!',
+                        ];
+                    }
+                }
             }
 
+            // Log what was found for debugging
+            preg_match_all('/<meta[^>]*name\s*=\s*["\']?ads-network-verification["\']?[^>]*>/i', $html, $foundMetaTags);
+            Log::warning('Verification meta tag not found', [
+                'url' => $url,
+                'expected_code' => $website->verification_code,
+                'found_meta_tags' => $foundMetaTags[0],
+                'html_contains_code' => strpos($html, $website->verification_code) !== false,
+            ]);
+
             return [
                 'verified' => false,
-                'message' => 'Verification meta tag not found. Please ensure you have added the meta tag to the <head> section of your website.',
+                'message' => 'Verification meta tag not found. Please ensure you have added the meta tag to the <head> section of your website. Expected code: ' . $website->verification_code,
             ];
         } catch (Exception $e) {
+            Log::error('Website verification exception', [
+                'url' => $url,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
             return [
                 'verified' => false,
-                'message' => 'Could not verify website: ' . $e->getMessage(),
+                'message' => 'Could not verify website: ' . $e->getMessage() . '. Please ensure the URL is accessible: ' . $url,
             ];
         }
     }
@@ -181,15 +233,16 @@ class WebsiteVerificationService
     {
         $domain = trim($domain);
         
-        // Remove protocol if present
-        $domain = preg_replace('#^https?://#', '', $domain);
+        // If already has protocol, return as-is
+        if (preg_match('#^https?://#', $domain)) {
+            return $domain;
+        }
         
-        // Remove trailing slash
+        // Remove trailing slash (but keep path)
         $domain = rtrim($domain, '/');
         
-        // For localhost/127.0.0.1, keep as-is (with port and path if present)
-        if (preg_match('/^(localhost|127\.0\.0\.1|0\.0\.0\.0)/i', $domain)) {
-            // Add http:// for localhost (https usually doesn't work on localhost)
+        // For localhost/127.0.0.1, add http:// (with port and path if present)
+        if (preg_match('/^(localhost|127\.0\.0\.1|0\.0\.0\.0|::1)/i', $domain)) {
             return 'http://' . $domain;
         }
         

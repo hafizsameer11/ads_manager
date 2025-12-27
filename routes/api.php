@@ -30,6 +30,15 @@ Route::prefix('ad')->group(function () {
     Route::middleware('auth:sanctum')->get('/stats/{unitCode}', [AdServerController::class, 'getStats'])->name('api.ad.stats');
 });
 
+// Conversion Tracking API Routes (Public - no authentication required)
+Route::prefix('conversion')->group(function () {
+    // Track conversion (POST)
+    Route::post('/track', [\App\Http\Controllers\Api\ConversionController::class, 'track'])->name('api.conversion.track');
+    
+    // Conversion pixel (GET - 1x1 image)
+    Route::get('/pixel/{campaignId}', [\App\Http\Controllers\Api\ConversionController::class, 'pixel'])->name('api.conversion.pixel');
+});
+
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });

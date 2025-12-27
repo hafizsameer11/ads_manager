@@ -114,12 +114,14 @@ class AdUnit extends Model
             }
             
             // Modern JavaScript SDK approach
+            // The SDK automatically detects API URL from script source - no configuration needed!
             return <<<HTML
 <!-- Ads Network Ad Unit: {$this->name} -->
 <div id="ads-network-{$unitCode}" style="width: {$width}px; height: {$height}px; margin: 0 auto;"></div>
 <script>
 (function() {
     // Load SDK if not already loaded
+    // SDK will auto-detect API URL from script source - no configuration needed!
     if (!window.AdsNetwork) {
         var script = document.createElement('script');
         script.src = '{$baseUrl}/js/ads-network.js';

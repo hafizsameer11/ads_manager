@@ -43,16 +43,17 @@ class CreateCampaignController extends Controller
             'name' => 'required|string|max:255',
             'ad_type' => 'required|in:banner,popup,popunder',
             'target_url' => 'required|url|max:500',
-            'ad_content' => 'required|string',
             'pricing_model' => 'required|in:cpm,cpc',
             'bid_amount' => 'required|numeric|min:0.01',
             'budget' => 'required|numeric|min:1',
+            'daily_budget' => 'nullable|numeric|min:0.01',
             'start_date' => 'nullable|date|after_or_equal:today',
             'end_date' => 'nullable|date|after:start_date',
-            'countries' => 'nullable|array',
-            'devices' => 'nullable|array',
-            'operating_systems' => 'nullable|array',
-            'browsers' => 'nullable|array',
+            'ad_title' => 'nullable|string|max:255',
+            'ad_description' => 'nullable|string|max:1000',
+            'ad_image' => 'nullable|url|max:500',
+            'target_countries' => 'nullable|array',
+            'target_devices' => 'nullable|array',
             'is_vpn_allowed' => 'nullable|boolean',
             'is_proxy_allowed' => 'nullable|boolean',
         ]);
@@ -73,26 +74,48 @@ class CreateCampaignController extends Controller
             return back()->withErrors(['error' => 'Insufficient balance. Please deposit funds first.']);
         }
 
+        // Validate that at least one ad content field is provided
+        if (empty($request->ad_title) && empty($request->ad_description) && empty($request->ad_image)) {
+            return back()->withErrors(['error' => 'Please provide at least one ad content field (title, description, or image).'])->withInput();
+        }
+
         try {
             $campaignService = app(\App\Services\CampaignService::class);
+            
+            // Build ad_content array from form fields
+            $adContent = [];
+            if ($request->ad_title) {
+                $adContent['title'] = $request->ad_title;
+            }
+            if ($request->ad_description) {
+                $adContent['description'] = $request->ad_description;
+            }
+            if ($request->ad_image) {
+                $adContent['image_url'] = $request->ad_image;
+            }
+            // If no content provided, use a default
+            if (empty($adContent)) {
+                $adContent = ['text' => $request->name];
+            }
             
             $campaignData = [
                 'name' => $request->name,
                 'ad_type' => $request->ad_type,
                 'target_url' => $request->target_url,
-                'ad_content' => $request->ad_content,
+                'ad_content' => $adContent,
                 'pricing_model' => $request->pricing_model,
                 'bid_amount' => $request->bid_amount,
                 'budget' => $request->budget,
-                'start_date' => $request->start_date,
+                'daily_budget' => $request->daily_budget,
+                'start_date' => $request->start_date ?: now(),
                 'end_date' => $request->end_date,
             ];
 
             $targetingData = [
-                'countries' => $request->countries ?? [],
-                'devices' => $request->devices ?? [],
-                'operating_systems' => $request->operating_systems ?? [],
-                'browsers' => $request->browsers ?? [],
+                'countries' => $request->target_countries ?? [],
+                'devices' => $request->target_devices ?? [],
+                'operating_systems' => [],
+                'browsers' => [],
                 'is_vpn_allowed' => $request->boolean('is_vpn_allowed', false),
                 'is_proxy_allowed' => $request->boolean('is_proxy_allowed', false),
             ];
@@ -102,6 +125,11 @@ class CreateCampaignController extends Controller
             return redirect()->route('dashboard.advertiser.campaigns')
                 ->with('success', 'Campaign created successfully. ' . ($campaign->approval_status === 'approved' ? 'Campaign is now active.' : 'Waiting for approval.'));
         } catch (\Exception $e) {
+            \Log::error('Campaign creation failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request' => $request->all(),
+            ]);
             return back()->withErrors(['error' => 'Failed to create campaign: ' . $e->getMessage()])->withInput();
         }
     }

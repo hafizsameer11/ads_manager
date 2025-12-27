@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Blog - Real Publisher Site Example</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            line-height: 1.7;
+            color: #333;
+            background: #f9f9f9;
+        }
+        
+        /* Header */
+        header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .site-title {
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 25px;
+            font-size: 14px;
+        }
+        
+        nav a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Main Layout */
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 40px;
+        }
+        
+        /* Article */
+        .article {
+            background: white;
+            padding: 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .article-header {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .article-title {
+            font-size: 36px;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        
+        .article-meta {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        
+        .article-content {
+            font-size: 18px;
+            line-height: 1.8;
+        }
+        
+        .article-content p {
+            margin-bottom: 25px;
+        }
+        
+        .article-content h2 {
+            font-size: 28px;
+            margin: 40px 0 20px;
+            color: #2c3e50;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        
+        .sidebar-widget {
+            background: white;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .sidebar-widget h3 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+            color: #2c3e50;
+        }
+        
+        .sidebar-list {
+            list-style: none;
+        }
+        
+        .sidebar-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .sidebar-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .sidebar-list a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        
+        .sidebar-list a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Footer */
+        footer {
+            background: #2c3e50;
+            color: white;
+            padding: 40px 20px;
+            margin-top: 60px;
+            text-align: center;
+        }
+        
+        /* Ad Container Styles - These come from the embed code */
+        .ad-wrapper {
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .ad-label {
+            font-size: 10px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-container">
+            <div class="site-title">My Awesome Blog</div>
+            <nav>
+                <a href="#home">Home</a>
+                <a href="#about">About</a>
+                <a href="#contact">Contact</a>
+            </nav>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Article Content -->
+        <article class="article">
+            <div class="article-header">
+                <h1 class="article-title">10 Tips for Better Web Development</h1>
+                <div class="article-meta">Published on December 27, 2024 • By John Doe</div>
+            </div>
+            
+            <div class="article-content">
+                <p>
+                    Welcome to our comprehensive guide on web development best practices. 
+                    In this article, we'll explore essential tips that every developer should know.
+                </p>
+                
+                <!-- 
+                    ============================================
+                    AD EMBED CODE #1 - BANNER AD (TOP)
+                    ============================================
+                    Publisher copies this code from dashboard and pastes it here.
+                    Only need to replace YOUR_UNIT_CODE_1 with actual unit code.
+                    SDK auto-detects API URL from script source - no config needed!
+                -->
+                <div class="ad-wrapper">
+                    <div class="ad-label">Advertisement</div>
+                    <!-- Ads Network Ad Unit: Banner Top -->
+                    <div id="ads-network-YOUR_UNIT_CODE_1" style="width: 728px; height: 90px; margin: 0 auto;"></div>
+                    <script>
+                    (function() {
+                        // Load SDK if not already loaded
+                        if (!window.AdsNetwork) {
+                            var script = document.createElement('script');
+                            script.src = 'http://localhost:8000/js/ads-network.js';
+                            script.async = true;
+                            document.head.appendChild(script);
+                            script.onload = function() {
+                                if (window.AdsNetwork) {
+                                    window.AdsNetwork.init('YOUR_UNIT_CODE_1', '#ads-network-YOUR_UNIT_CODE_1', {type: 'banner'});
+                                }
+                            };
+                        } else {
+                            window.AdsNetwork.init('YOUR_UNIT_CODE_1', '#ads-network-YOUR_UNIT_CODE_1', {type: 'banner'});
+                        }
+                    })();
+                    </script>
+                </div>
+                <!-- End of Ad Embed Code #1 -->
+                
+                <h2>Understanding Modern Development</h2>
+                <p>
+                    Modern web development has evolved significantly. Today's developers need to 
+                    understand a wide range of technologies and frameworks. From responsive design 
+                    to performance optimization, there's always something new to learn.
+                </p>
+                
+                <p>
+                    One of the most important aspects is creating user-friendly interfaces. This 
+                    involves not just making things look good, but also ensuring they work well 
+                    across different devices and browsers.
+                </p>
+                
+                <!-- 
+                    ============================================
+                    AD EMBED CODE #2 - SQUARE AD (MIDDLE)
+                    ============================================
+                    Replace YOUR_UNIT_CODE_2 with actual unit code.
+                    SDK auto-detects API URL automatically.
+                -->
+                <div class="ad-wrapper">
+                    <div class="ad-label">Advertisement</div>
+                    <!-- Ads Network Ad Unit: Square Middle -->
+                    <div id="ads-network-YOUR_UNIT_CODE_2" style="width: 300px; height: 250px; margin: 0 auto;"></div>
+                    <script>
+                    (function() {
+                        if (!window.AdsNetwork) {
+                            var script = document.createElement('script');
+                            script.src = 'http://localhost:8000/js/ads-network.js';
+                            script.async = true;
+                            document.head.appendChild(script);
+                            script.onload = function() {
+                                if (window.AdsNetwork) {
+                                    window.AdsNetwork.init('YOUR_UNIT_CODE_2', '#ads-network-YOUR_UNIT_CODE_2', {type: 'banner'});
+                                }
+                            };
+                        } else {
+                            window.AdsNetwork.init('YOUR_UNIT_CODE_2', '#ads-network-YOUR_UNIT_CODE_2', {type: 'banner'});
+                        }
+                    })();
+                    </script>
+                </div>
+                <!-- End of Ad Embed Code #2 -->
+                
+                <h2>Best Practices for Code Quality</h2>
+                <p>
+                    Writing clean, maintainable code is crucial for any successful project. This 
+                    means following coding standards, writing meaningful comments, and organizing 
+                    your code in a logical way.
+                </p>
+                
+                <p>
+                    Testing is another critical aspect. By writing tests for your code, you can 
+                    catch bugs early and ensure your application works as expected.
+                </p>
+                
+                <!-- 
+                    ============================================
+                    AD EMBED CODE #3 - BANNER AD (BOTTOM)
+                    ============================================
+                    Replace YOUR_UNIT_CODE_3 with actual unit code.
+                -->
+                <div class="ad-wrapper">
+                    <div class="ad-label">Advertisement</div>
+                    <!-- Ads Network Ad Unit: Banner Bottom -->
+                    <div id="ads-network-YOUR_UNIT_CODE_3" style="width: 728px; height: 90px; margin: 0 auto;"></div>
+                    <script>
+                    (function() {
+                        if (!window.AdsNetwork) {
+                            var script = document.createElement('script');
+                            script.src = 'http://localhost:8000/js/ads-network.js';
+                            script.async = true;
+                            document.head.appendChild(script);
+                            script.onload = function() {
+                                if (window.AdsNetwork) {
+                                    window.AdsNetwork.init('YOUR_UNIT_CODE_3', '#ads-network-YOUR_UNIT_CODE_3', {type: 'banner'});
+                                }
+                            };
+                        } else {
+                            window.AdsNetwork.init('YOUR_UNIT_CODE_3', '#ads-network-YOUR_UNIT_CODE_3', {type: 'banner'});
+                        }
+                    })();
+                    </script>
+                </div>
+                <!-- End of Ad Embed Code #3 -->
+                
+                <h2>Performance Optimization</h2>
+                <p>
+                    Website performance is crucial for user experience and SEO. Slow-loading 
+                    websites can drive away visitors. There are many techniques you can use to 
+                    improve performance.
+                </p>
+            </div>
+        </article>
+        
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <!-- 
+                ============================================
+                AD EMBED CODE #4 - SIDEBAR VERTICAL AD
+                ============================================
+                Replace YOUR_UNIT_CODE_4 with actual unit code.
+            -->
+            <div class="sidebar-widget">
+                <h3>Advertisement</h3>
+                <!-- Ads Network Ad Unit: Sidebar Vertical -->
+                <div id="ads-network-YOUR_UNIT_CODE_4" style="width: 300px; height: 600px; margin: 0 auto;"></div>
+                <script>
+                (function() {
+                    if (!window.AdsNetwork) {
+                        var script = document.createElement('script');
+                        script.src = 'http://localhost:8000/js/ads-network.js';
+                        script.async = true;
+                        document.head.appendChild(script);
+                        script.onload = function() {
+                            if (window.AdsNetwork) {
+                                window.AdsNetwork.init('YOUR_UNIT_CODE_4', '#ads-network-YOUR_UNIT_CODE_4', {type: 'banner'});
+                            }
+                        };
+                    } else {
+                        window.AdsNetwork.init('YOUR_UNIT_CODE_4', '#ads-network-YOUR_UNIT_CODE_4', {type: 'banner'});
+                    }
+                })();
+                </script>
+            </div>
+            <!-- End of Ad Embed Code #4 -->
+            
+            <!-- Popular Posts Widget -->
+            <div class="sidebar-widget">
+                <h3>Popular Posts</h3>
+                <ul class="sidebar-list">
+                    <li><a href="#">5 CSS Tricks Every Developer Should Know</a></li>
+                    <li><a href="#">JavaScript Best Practices</a></li>
+                    <li><a href="#">Building Responsive Layouts</a></li>
+                </ul>
+            </div>
+            
+            <!-- 
+                ============================================
+                AD EMBED CODE #5 - SIDEBAR SQUARE AD
+                ============================================
+                Replace YOUR_UNIT_CODE_5 with actual unit code.
+            -->
+            <div class="sidebar-widget">
+                <h3>Advertisement</h3>
+                <!-- Ads Network Ad Unit: Sidebar Square -->
+                <div id="ads-network-YOUR_UNIT_CODE_5" style="width: 300px; height: 250px; margin: 0 auto;"></div>
+                <script>
+                (function() {
+                    if (!window.AdsNetwork) {
+                        var script = document.createElement('script');
+                        script.src = 'http://localhost:8000/js/ads-network.js';
+                        script.async = true;
+                        document.head.appendChild(script);
+                        script.onload = function() {
+                            if (window.AdsNetwork) {
+                                window.AdsNetwork.init('YOUR_UNIT_CODE_5', '#ads-network-YOUR_UNIT_CODE_5', {type: 'banner'});
+                            }
+                        };
+                    } else {
+                        window.AdsNetwork.init('YOUR_UNIT_CODE_5', '#ads-network-YOUR_UNIT_CODE_5', {type: 'banner'});
+                    }
+                })();
+                </script>
+            </div>
+            <!-- End of Ad Embed Code #5 -->
+        </aside>
+    </div>
+    
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2024 My Awesome Blog. All rights reserved.</p>
+    </footer>
+    
+    <!-- 
+        ============================================
+        HOW TO USE THIS TEST PAGE:
+        ============================================
+        
+        1. Get embed code from dashboard:
+           - Login as publisher: http://localhost:8000/login
+           - Go to: /dashboard/publisher/sites/{website}/ad-units
+           - Click on an ad unit → Copy embed code
+        
+        2. Replace placeholders in this file:
+           - Find YOUR_UNIT_CODE_1, YOUR_UNIT_CODE_2, etc.
+           - Replace with your actual 16-character unit codes
+           - The script URL (http://localhost:8000/js/ads-network.js) is already correct
+           - SDK automatically detects API URL - NO CONFIGURATION NEEDED!
+        
+        3. Save and open in browser:
+           - http://localhost:8000/publisher-site-example.html
+        
+        4. Ads load automatically - just like a real publisher site!
+        
+        ============================================
+        HOW IT WORKS:
+        ============================================
+        - Script loads from: http://localhost:8000/js/ads-network.js
+        - SDK auto-detects: Base URL = http://localhost:8000
+        - SDK uses: http://localhost:8000/api/ad/{unitCode}
+        - NO API URL CONFIGURATION NEEDED!
+        
+        This is EXACTLY how real publishers integrate ads.
+        They copy embed code from dashboard and paste into HTML.
+    -->
+</body>
+</html>
+

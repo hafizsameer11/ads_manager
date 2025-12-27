@@ -52,6 +52,12 @@
                         <span>Campaigns</span>
                     </a>
                 </li>
+                <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.deposits') ? 'active' : '' }}">
+                    <a href="{{ route('dashboard.admin.deposits') }}" class="nav-link">
+                        <i class="fas fa-money-bill-alt"></i>
+                        <span>Deposits</span>
+                    </a>
+                </li>
                 <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.withdrawals') ? 'active' : '' }}">
                     <a href="{{ route('dashboard.admin.withdrawals') }}" class="nav-link">
                         <i class="fas fa-money-bill-wave"></i>
