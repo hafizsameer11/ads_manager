@@ -31,6 +31,8 @@ class SettingsController extends Controller
             'ad_rotation_mode' => Setting::get('ad_rotation_mode', 'weighted'),
             'global_max_impressions_per_ip_per_day' => Setting::get('global_max_impressions_per_ip_per_day', null),
             'global_max_clicks_per_ip_per_day' => Setting::get('global_max_clicks_per_ip_per_day', null),
+            // Publisher website approval
+            'auto_approve_publisher_websites' => Setting::get('auto_approve_publisher_websites', false),
         ];
         
         return view('dashboard.admin.settings', compact('settings'));
@@ -122,6 +124,15 @@ class SettingsController extends Controller
                 Setting::set('global_max_clicks_per_ip_per_day', $request->global_max_clicks_per_ip_per_day, 'integer', 'ad_rotation');
                 
                 return back()->with('success', 'Rotation & Frequency settings updated successfully.');
+                
+            case 'publisher':
+                $request->validate([
+                    'auto_approve_publisher_websites' => 'nullable|boolean',
+                ]);
+                
+                Setting::set('auto_approve_publisher_websites', $request->has('auto_approve_publisher_websites'), 'boolean', 'publisher');
+                
+                return back()->with('success', 'Publisher settings updated successfully.');
                 
             default:
                 return back()->withErrors(['error' => 'Invalid section.']);

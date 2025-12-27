@@ -256,4 +256,38 @@
             </form>
         </div>
     </div>
+
+    <!-- Publisher Settings -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Publisher Website Approval Settings</h3>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ route('dashboard.admin.settings.update') }}">
+                @csrf
+                <input type="hidden" name="section" value="publisher">
+                
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input type="checkbox" id="auto_approve_publisher_websites" name="auto_approve_publisher_websites" class="form-check-input" 
+                                       {{ $settings['auto_approve_publisher_websites'] ? 'checked' : '' }}>
+                                <label class="form-check-label" for="auto_approve_publisher_websites">
+                                    <strong>Auto-approve Publisher Websites</strong>
+                                </label>
+                            </div>
+                            <small class="text-muted d-block mt-2">
+                                When enabled, newly added websites by publishers will be automatically approved. 
+                                When disabled, admin must manually approve each website.
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <button type="submit" class="btn btn-primary">Save Publisher Settings</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 @endsection

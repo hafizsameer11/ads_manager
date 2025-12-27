@@ -24,13 +24,13 @@
     <div class="card">
         <div class="card-body">
             <form method="GET" action="{{ route('dashboard.admin.reports') }}">
-                <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 10px;">
+                <div class="filter-form-row" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 16px;">
                     <div style="flex: 0 0 auto; min-width: 200px;">
-                        <label class="form-label" style="margin-bottom: 5px; display: block;">Start Date</label>
+                        <label class="form-label" style="display: block; margin-bottom: 6px; font-weight: 500; font-size: 13px; color: var(--text-primary);">Start Date</label>
                         <input type="date" name="start_date" class="form-control" value="{{ $startDate }}" required>
                     </div>
                     <div style="flex: 0 0 auto; min-width: 200px;">
-                        <label class="form-label" style="margin-bottom: 5px; display: block;">End Date</label>
+                        <label class="form-label" style="display: block; margin-bottom: 6px; font-weight: 500; font-size: 13px; color: var(--text-primary);">End Date</label>
                         <input type="date" name="end_date" class="form-control" value="{{ $endDate }}" required>
                     </div>
                 </div>

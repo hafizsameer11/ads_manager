@@ -11,19 +11,46 @@ class Website extends Model
 {
     use HasFactory;
 
+    /**
+     * Boot the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // When website status changes to rejected or disabled, automatically disable all ad units
+        static::updating(function ($website) {
+            if ($website->isDirty('status')) {
+                $oldStatus = $website->getOriginal('status');
+                $newStatus = $website->status;
+                
+                // If website is being rejected or disabled, pause all ad units
+                if (in_array($newStatus, ['rejected', 'disabled']) && !in_array($oldStatus, ['rejected', 'disabled'])) {
+                    $website->adUnits()->update(['status' => 'paused']);
+                }
+            }
+        });
+    }
+
     protected $fillable = [
         'publisher_id',
         'domain',
         'name',
         'verification_method',
         'verification_code',
+        'verification_status',
         'status',
         'rejection_reason',
         'verified_at',
+        'approved_at',
+        'rejected_at',
+        'admin_note',
     ];
 
     protected $casts = [
         'verified_at' => 'datetime',
+        'approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
     ];
 
     /**
@@ -48,5 +75,21 @@ class Website extends Model
     public static function generateVerificationCode(): string
     {
         return strtoupper(substr(md5(uniqid(rand(), true)), 0, 16));
+    }
+
+    /**
+     * Check if website is approved.
+     */
+    public function isApproved(): bool
+    {
+        return $this->status === 'approved';
+    }
+
+    /**
+     * Check if website can have ad units.
+     */
+    public function canHaveAdUnits(): bool
+    {
+        return $this->status === 'approved';
     }
 }

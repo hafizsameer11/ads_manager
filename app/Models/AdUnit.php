@@ -98,6 +98,7 @@ class AdUnit extends Model
     public function getEmbedCodeAttribute(): string
     {
         $baseUrl = config('app.url');
+        $unitCode = $this->unit_code;
         
         if ($this->type === 'banner') {
             // Parse size for width and height
@@ -112,10 +113,79 @@ class AdUnit extends Model
                 }
             }
             
-            return "<iframe src=\"{$baseUrl}/api/ad/{$this->unit_code}\" width=\"{$width}\" height=\"{$height}\" frameborder=\"0\"></iframe>";
+            // Modern JavaScript SDK approach
+            return <<<HTML
+<!-- Ads Network Ad Unit: {$this->name} -->
+<div id="ads-network-{$unitCode}" style="width: {$width}px; height: {$height}px; margin: 0 auto;"></div>
+<script>
+(function() {
+    // Load SDK if not already loaded
+    if (!window.AdsNetwork) {
+        var script = document.createElement('script');
+        script.src = '{$baseUrl}/js/ads-network.js';
+        script.async = true;
+        document.head.appendChild(script);
+        script.onload = function() {
+            if (window.AdsNetwork) {
+                window.AdsNetwork.init('{$unitCode}', '#ads-network-{$unitCode}', {type: 'banner'});
+            }
+        };
+    } else {
+        window.AdsNetwork.init('{$unitCode}', '#ads-network-{$unitCode}', {type: 'banner'});
+    }
+})();
+</script>
+HTML;
+        } else if ($this->type === 'popup') {
+            $frequency = $this->frequency ?? 30;
+            
+            return <<<HTML
+<!-- Ads Network Popup Ad: {$this->name} -->
+<script>
+(function() {
+    // Load SDK if not already loaded
+    if (!window.AdsNetwork) {
+        var script = document.createElement('script');
+        script.src = '{$baseUrl}/js/ads-network.js';
+        script.async = true;
+        document.head.appendChild(script);
+        script.onload = function() {
+            if (window.AdsNetwork) {
+                window.AdsNetwork.init('{$unitCode}', null, {type: 'popup', frequency: {$frequency}});
+            }
+        };
+    } else {
+        window.AdsNetwork.init('{$unitCode}', null, {type: 'popup', frequency: {$frequency}});
+    }
+})();
+</script>
+HTML;
+        } else if ($this->type === 'popunder') {
+            $frequency = $this->frequency ?? 30;
+            
+            return <<<HTML
+<!-- Ads Network Popunder Ad: {$this->name} -->
+<script>
+(function() {
+    // Load SDK if not already loaded
+    if (!window.AdsNetwork) {
+        var script = document.createElement('script');
+        script.src = '{$baseUrl}/js/ads-network.js';
+        script.async = true;
+        document.head.appendChild(script);
+        script.onload = function() {
+            if (window.AdsNetwork) {
+                window.AdsNetwork.init('{$unitCode}', null, {type: 'popunder', frequency: {$frequency}});
+            }
+        };
         } else {
-            // Popup
-            return "<script src=\"{$baseUrl}/api/ad/{$this->unit_code}?type=popup\"></script>";
+        window.AdsNetwork.init('{$unitCode}', null, {type: 'popunder', frequency: {$frequency}});
+    }
+})();
+</script>
+HTML;
         }
+        
+        return '';
     }
 }

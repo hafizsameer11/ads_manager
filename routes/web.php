@@ -50,6 +50,9 @@ Route::prefix('')->name('website.')->group(function () {
     // Homepage
     Route::get('/', [HomeController::class, 'index'])->name('home');
     
+    // Ad Script (Public - for publishers to embed)
+    Route::get('/js/ads-network.js', [\App\Http\Controllers\Website\AdScriptController::class, 'serveScript'])->name('ad-script');
+    
     // Advertiser Page
     Route::get('/advertiser', [AdvertiserController::class, 'index'])->name('advertiser');
     
@@ -109,6 +112,8 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'a
         Route::get('/websites/{id}', [AdminWebsitesController::class, 'show'])->name('websites.show');
         Route::post('/websites/{id}/approve', [AdminWebsitesController::class, 'approve'])->name('websites.approve');
         Route::post('/websites/{id}/reject', [AdminWebsitesController::class, 'reject'])->name('websites.reject');
+        Route::post('/websites/{id}/disable', [AdminWebsitesController::class, 'disable'])->name('websites.disable');
+        Route::post('/websites/{id}/enable', [AdminWebsitesController::class, 'enable'])->name('websites.enable');
         Route::post('/websites/{id}/suspend', [AdminWebsitesController::class, 'suspend'])->name('websites.suspend');
         Route::get('/campaigns', [AdminCampaignsController::class, 'index'])->name('campaigns');
         Route::get('/withdrawals', [AdminWithdrawalsController::class, 'index'])->name('withdrawals');
@@ -156,6 +161,8 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'a
         Route::get('/sites/{website}', [SitesController::class, 'show'])->name('sites.show');
         Route::get('/sites/{website}/edit', [SitesController::class, 'edit'])->name('sites.edit');
         Route::put('/sites/{website}', [SitesController::class, 'update'])->name('sites.update');
+        Route::post('/sites/{website}/verify', [SitesController::class, 'verify'])->name('sites.verify');
+        Route::get('/sites/{website}/verification-file', [SitesController::class, 'downloadVerificationFile'])->name('sites.verification-file');
         Route::delete('/sites/{website}', [SitesController::class, 'destroy'])->name('sites.destroy');
         
         // Ad Units Routes

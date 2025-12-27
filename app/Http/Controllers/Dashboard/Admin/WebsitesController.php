@@ -59,6 +59,7 @@ class WebsitesController extends Controller
             'approved' => Website::where('status', 'approved')->count(),
             'pending' => Website::where('status', 'pending')->count(),
             'rejected' => Website::where('status', 'rejected')->count(),
+            'disabled' => Website::where('status', 'disabled')->count(),
         ];
         
         return view('dashboard.admin.websites', compact('websites', 'stats'));
@@ -90,7 +91,10 @@ class WebsitesController extends Controller
         $website->update([
             'status' => 'approved',
             'verified_at' => now(),
+            'approved_at' => now(),
             'rejection_reason' => null,
+            'rejected_at' => null,
+            'admin_note' => null,
         ]);
         
         // Send notification to publisher
@@ -119,11 +123,14 @@ class WebsitesController extends Controller
         
         $request->validate([
             'rejection_reason' => 'required|string|max:500',
+            'admin_note' => 'nullable|string|max:1000',
         ]);
         
         $website->update([
             'status' => 'rejected',
             'rejection_reason' => $request->rejection_reason,
+            'rejected_at' => now(),
+            'admin_note' => $request->admin_note,
         ]);
         
         // Disable all ad units for this website
@@ -143,6 +150,73 @@ class WebsitesController extends Controller
     }
 
     /**
+     * Disable website.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function disable(Request $request, $id)
+    {
+        $website = Website::with('publisher.user')->findOrFail($id);
+        
+        $request->validate([
+            'admin_note' => 'nullable|string|max:1000',
+        ]);
+        
+        $website->update([
+            'status' => 'disabled',
+            'admin_note' => $request->admin_note,
+        ]);
+        
+        // Disable all ad units for this website
+        $website->adUnits()->update(['status' => 'paused']);
+        
+        // Send notification to publisher
+        if ($website->publisher && $website->publisher->user) {
+            $this->notificationService->create(
+                $website->publisher->user,
+                'website_disabled',
+                'Website Disabled',
+                "Your website '{$website->domain}' has been disabled by admin."
+            );
+        }
+
+        return back()->with('success', 'Website disabled.');
+    }
+
+    /**
+     * Enable website (re-approve a disabled or rejected website).
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function enable($id)
+    {
+        $website = Website::with('publisher.user')->findOrFail($id);
+        
+        $website->update([
+            'status' => 'approved',
+            'approved_at' => now(),
+            'verified_at' => now(),
+            'rejection_reason' => null,
+            'rejected_at' => null,
+        ]);
+        
+        // Send notification to publisher
+        if ($website->publisher && $website->publisher->user) {
+            $this->notificationService->create(
+                $website->publisher->user,
+                'website_approved',
+                'Website Enabled',
+                "Your website '{$website->domain}' has been enabled and approved!"
+            );
+        }
+
+        return back()->with('success', 'Website enabled and approved.');
+    }
+
+    /**
      * Suspend website (change status to rejected temporarily).
      *
      * @param  \Illuminate\Http\Request  $request
@@ -156,6 +230,7 @@ class WebsitesController extends Controller
         $website->update([
             'status' => 'rejected',
             'rejection_reason' => $request->reason ?? 'Website suspended by admin',
+            'rejected_at' => now(),
         ]);
         
         // Disable all ad units for this website

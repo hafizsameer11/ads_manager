@@ -3,21 +3,13 @@
 @section('title', 'Ad Unit Details - Publisher Dashboard')
 
 @section('content')
-    <div class="page-header">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h1>Ad Unit Details</h1>
-                <p class="text-muted">{{ $adUnit->name }}</p>
-            </div>
-            <div>
-                <a href="{{ route('dashboard.publisher.sites.ad-units.index', $adUnit->website) }}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Back to Ad Units
-                </a>
-                <a href="{{ route('dashboard.publisher.ad-units.edit', $adUnit) }}" class="btn btn-primary">
-                    <i class="fas fa-edit"></i> Edit
-                </a>
-            </div>
-        </div>
+    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px;">
+        <a href="{{ route('dashboard.publisher.sites.ad-units.index', $adUnit->website) }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Ad Units
+        </a>
+        <a href="{{ route('dashboard.publisher.ad-units.edit', $adUnit) }}" class="btn btn-primary">
+            <i class="fas fa-edit"></i> Edit
+        </a>
     </div>
 
     @if(session('success'))
@@ -95,6 +87,22 @@
                     <h3 class="card-title">Embed Code</h3>
                 </div>
                 <div class="card-body">
+                    @if($adUnit->website->verification_status !== 'verified')
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> <strong>Website Verification Required</strong>
+                            <p class="mb-0 small mt-2">Your website must be verified before you can generate ad code. <a href="{{ route('dashboard.publisher.sites.show', $adUnit->website) }}">Go to website verification</a></p>
+                        </div>
+                    @elseif(!in_array($adUnit->website->status, ['approved', 'verified']))
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> <strong>Website is under review</strong>
+                            <p class="mb-0 small mt-2">Your website must be approved before you can generate ad code.</p>
+                        </div>
+                    @elseif($adUnit->status !== 'active')
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> <strong>Ad unit is disabled by admin</strong>
+                            <p class="mb-0 small mt-2">This ad unit is currently paused or disabled. Please contact support if you believe this is an error.</p>
+                        </div>
+                    @else
                     <p class="text-muted small mb-3">Copy and paste this code into your website to display the ad unit.</p>
                     
                     <div class="form-group">
@@ -109,11 +117,21 @@
                     <div class="alert alert-info mt-3 small">
                         <strong>Instructions:</strong><br>
                         @if($adUnit->type === 'banner')
-                            Place this iframe code where you want the banner to appear on your website.
+                                Place this code where you want the banner to appear on your website. The script will automatically load and display ads.
                         @else
-                            Place this script tag in the &lt;head&gt; section or before the closing &lt;/body&gt; tag of your website.
+                                Place this script tag in the &lt;head&gt; section or before the closing &lt;/body&gt; tag of your website. The script will automatically handle popup/popunder ads based on frequency settings.
                         @endif
+                            <br><br>
+                            <strong>Features:</strong>
+                            <ul class="mb-0 mt-2" style="padding-left: 20px;">
+                                <li>Automatic ad loading and display</li>
+                                <li>Impression tracking (counts when ad is visible)</li>
+                                <li>Click tracking</li>
+                                <li>Mobile responsive</li>
+                                <li>Fast loading (async script)</li>
+                            </ul>
                     </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -143,6 +161,7 @@
     }
 </script>
 @endpush
+
 
 
 

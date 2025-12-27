@@ -3,18 +3,10 @@
 @section('title', 'Edit Ad Unit - Publisher Dashboard')
 
 @section('content')
-    <div class="page-header">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h1>Edit Ad Unit</h1>
-                <p class="text-muted">{{ $adUnit->name }}</p>
-            </div>
-            <div>
-                <a href="{{ route('dashboard.publisher.ad-units.show', $adUnit) }}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Back
-                </a>
-            </div>
-        </div>
+    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px;">
+        <a href="{{ route('dashboard.publisher.ad-units.show', $adUnit) }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
     </div>
 
     @if($errors->any())
@@ -106,6 +98,9 @@
         </div>
     </div>
 @endsection
+
+
+
 
 
 

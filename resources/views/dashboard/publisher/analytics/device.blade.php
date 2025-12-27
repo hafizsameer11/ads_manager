@@ -3,21 +3,13 @@
 @section('title', 'Device Analytics - Publisher Dashboard')
 
 @section('content')
-    <div class="page-header">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h1>Device Analytics</h1>
-                <p class="text-muted">View earnings performance by device, OS, or browser.</p>
-            </div>
-            <div style="display: flex; gap: 10px;">
-                <a href="{{ route('dashboard.publisher.statistics') }}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Back to Statistics
-                </a>
-                <a href="{{ route('dashboard.publisher.analytics.geo') }}" class="btn btn-primary">
-                    <i class="fas fa-globe"></i> Geo Analytics
-                </a>
-            </div>
-        </div>
+    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px;">
+        <a href="{{ route('dashboard.publisher.statistics') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Statistics
+        </a>
+        <a href="{{ route('dashboard.publisher.analytics.geo') }}" class="btn btn-primary">
+            <i class="fas fa-globe"></i> Geo Analytics
+        </a>
     </div>
 
     <!-- Filters -->

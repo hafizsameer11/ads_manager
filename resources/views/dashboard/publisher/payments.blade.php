@@ -3,11 +3,6 @@
 @section('title', 'Payments - Publisher Dashboard')
 
 @section('content')
-    <div class="page-header">
-        <h1>Withdrawals & Payments</h1>
-        <p class="text-muted">Request withdrawals and view payment history.</p>
-    </div>
-
     <!-- Summary Cards -->
     <div class="stats-grid">
         <div class="stat-card primary">

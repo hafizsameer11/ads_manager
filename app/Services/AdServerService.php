@@ -115,13 +115,41 @@ class AdServerService
         // Calculate revenue for response
         $revenue = $this->revenueCalculation->calculateImpressionRevenue($campaign, $adUnit);
 
-        return [
+        // Parse ad content (can be JSON string or array)
+        $adContent = $campaign->ad_content;
+        if (is_string($adContent)) {
+            $adContent = json_decode($adContent, true) ?: [];
+        }
+        if (!is_array($adContent)) {
+            $adContent = [];
+        }
+
+        // Format response for JavaScript SDK
+        $response = [
             'campaign_id' => $campaign->id,
+            'ad_unit_id' => $adUnit->id,
+            'type' => $campaign->ad_type,
             'target_url' => $campaign->target_url,
-            'ad_content' => $campaign->ad_content,
-            'ad_type' => $campaign->ad_type,
-            'impression_id' => $impression ? $impression->id : null,
+            'title' => $adContent['title'] ?? $campaign->name,
+            'width' => $adUnit->width,
+            'height' => $adUnit->height,
         ];
+
+        // Add ad creative based on what's available
+        if (!empty($adContent['image_url'])) {
+            $response['image_url'] = $adContent['image_url'];
+        } elseif (!empty($adContent['html'])) {
+            $response['html'] = $adContent['html'];
+        } elseif (!empty($adContent['text'])) {
+            $response['text'] = $adContent['text'];
+        } elseif (!empty($adContent['description'])) {
+            $response['text'] = $adContent['description'];
+        } else {
+            // Fallback: use campaign name as text
+            $response['text'] = $campaign->name;
+        }
+
+        return $response;
     }
 
     /**

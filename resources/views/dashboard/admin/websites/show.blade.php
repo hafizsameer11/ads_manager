@@ -55,9 +55,21 @@
                                 </button>
                             </div>
                         @elseif($website->status === 'approved')
-                            <button type="button" class="btn btn-warning" onclick="showSuspendModal()">
-                                <i class="fas fa-ban"></i> Suspend
+                            <div style="display: flex; gap: 5px;">
+                                <button type="button" class="btn btn-warning" onclick="showDisableModal()">
+                                    <i class="fas fa-ban"></i> Disable
+                                </button>
+                                <button type="button" class="btn btn-danger" onclick="showSuspendModal()">
+                                    <i class="fas fa-times"></i> Reject
+                                </button>
+                            </div>
+                        @elseif($website->status === 'rejected' || $website->status === 'disabled')
+                            <form action="{{ route('dashboard.admin.websites.enable', $website->id) }}" method="POST" style="display: inline;">
+                                @csrf
+                                <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to enable and approve this website?')">
+                                    <i class="fas fa-check"></i> Enable/Approve
                             </button>
+                            </form>
                         @endif
                     </div>
                 </div>
@@ -74,19 +86,43 @@
                         <tr>
                             <th>Status:</th>
                             <td>
-                                @if($website->status === 'approved')
+                                @if(empty($website->status))
+                                    <span class="badge badge-secondary">No Status</span>
+                                @elseif($website->status === 'approved')
                                     <span class="badge badge-success">Approved</span>
                                 @elseif($website->status === 'pending')
                                     <span class="badge badge-warning">Pending</span>
-                                @else
+                                @elseif($website->status === 'disabled')
+                                    <span class="badge badge-secondary">Disabled</span>
+                                @elseif($website->status === 'rejected')
                                     <span class="badge badge-danger">Rejected</span>
+                                @else
+                                    <span class="badge badge-info">{{ ucfirst($website->status) }}</span>
                                 @endif
                             </td>
                         </tr>
+                        @if($website->approved_at)
+                        <tr>
+                            <th>Approved At:</th>
+                            <td>{{ $website->approved_at->format('M d, Y H:i') }}</td>
+                        </tr>
+                        @endif
+                        @if($website->rejected_at)
+                        <tr>
+                            <th>Rejected At:</th>
+                            <td>{{ $website->rejected_at->format('M d, Y H:i') }}</td>
+                        </tr>
+                        @endif
                         @if($website->rejection_reason)
                         <tr>
                             <th>Rejection Reason:</th>
                             <td class="text-danger">{{ $website->rejection_reason }}</td>
+                        </tr>
+                        @endif
+                        @if($website->admin_note)
+                        <tr>
+                            <th>Admin Note:</th>
+                            <td class="text-muted"><small>{{ $website->admin_note }}</small></td>
                         </tr>
                         @endif
                         <tr>
@@ -228,10 +264,43 @@
                             <label for="rejection_reason">Rejection Reason <span class="text-danger">*</span></label>
                             <textarea id="rejection_reason" name="rejection_reason" class="form-control" rows="3" required placeholder="Enter reason for rejection..."></textarea>
                         </div>
+                        <div class="form-group">
+                            <label for="reject_admin_note">Admin Note (Optional)</label>
+                            <textarea id="reject_admin_note" name="admin_note" class="form-control" rows="2" placeholder="Internal note (not visible to publisher)..."></textarea>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-danger">Reject Website</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Disable Modal -->
+    <div class="modal fade" id="disableModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form action="{{ route('dashboard.admin.websites.disable', $website->id) }}" method="POST">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title">Disable Website</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to disable <strong>{{ $website->domain }}</strong>?</p>
+                        <p class="text-warning"><small>This will pause all ad units on this website.</small></p>
+                        <div class="form-group">
+                            <label for="disable_admin_note">Admin Note (Optional)</label>
+                            <textarea id="disable_admin_note" name="admin_note" class="form-control" rows="2" placeholder="Internal note (not visible to publisher)..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning">Disable Website</button>
                     </div>
                 </form>
             </div>
@@ -272,6 +341,10 @@
 <script>
     function showRejectModal() {
         $('#rejectModal').modal('show');
+    }
+
+    function showDisableModal() {
+        $('#disableModal').modal('show');
     }
 
     function showSuspendModal() {

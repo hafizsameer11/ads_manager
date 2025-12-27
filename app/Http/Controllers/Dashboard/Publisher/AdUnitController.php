@@ -52,9 +52,14 @@ class AdUnitController extends Controller
             abort(403, 'Unauthorized access to this website.');
         }
         
-        // Only approved websites can create ad units
+        // Only verified and approved websites can create ad units
+        if ($website->verification_status !== 'verified') {
+            return redirect()->route('dashboard.publisher.sites.show', $website)
+                ->with('error', 'Website must be verified before creating ad units. Please complete verification first.');
+        }
+        
         if (!in_array($website->status, ['approved', 'verified'])) {
-            return redirect()->route('dashboard.publisher.sites')
+            return redirect()->route('dashboard.publisher.sites.show', $website)
                 ->with('error', 'Website must be approved before creating ad units.');
         }
         
@@ -78,7 +83,11 @@ class AdUnitController extends Controller
             abort(403, 'Unauthorized access to this website.');
         }
         
-        // Only approved websites can create ad units
+        // Only verified and approved websites can create ad units - BACKEND VALIDATION
+        if ($website->verification_status !== 'verified') {
+            return back()->withErrors(['error' => 'Website must be verified before creating ad units. Please complete verification first.']);
+        }
+        
         if (!in_array($website->status, ['approved', 'verified'])) {
             return back()->withErrors(['error' => 'Website must be approved before creating ad units.']);
         }
@@ -146,6 +155,12 @@ class AdUnitController extends Controller
         }
         
         $adUnit->load('website');
+        
+        // Check if website is approved - BACKEND VALIDATION
+        if ($adUnit->website->status !== 'approved') {
+            return redirect()->route('dashboard.publisher.sites')
+                ->with('error', 'Website must be approved to view ad unit details.');
+        }
         
         return view('dashboard.publisher.ad-units.show', compact('adUnit'));
     }

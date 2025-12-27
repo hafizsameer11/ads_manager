@@ -3,18 +3,10 @@
 @section('title', 'Edit Website - Publisher Dashboard')
 
 @section('content')
-    <div class="page-header">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h1>Edit Website</h1>
-                <p class="text-muted">{{ $website->domain }}</p>
-            </div>
-            <div>
-                <a href="{{ route('dashboard.publisher.sites.show', $website) }}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Back
-                </a>
-            </div>
-        </div>
+    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px;">
+        <a href="{{ route('dashboard.publisher.sites.show', $website) }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
     </div>
 
     @if($errors->any())

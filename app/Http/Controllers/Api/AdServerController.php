@@ -56,7 +56,8 @@ class AdServerController extends Controller
         $request->validate([
             'campaign_id' => 'required|exists:campaigns,id',
             'ad_unit_id' => 'required|exists:ad_units,id',
-            'impression_id' => 'nullable|exists:impressions,id',
+            'impression_id' => 'nullable|string',
+            'visitor_info' => 'nullable|array',
         ]);
 
         $campaign = Campaign::findOrFail($request->campaign_id);
@@ -89,7 +90,8 @@ class AdServerController extends Controller
         $request->validate([
             'campaign_id' => 'required|exists:campaigns,id',
             'ad_unit_id' => 'required|exists:ad_units,id',
-            'impression_id' => 'nullable|exists:impressions,id',
+            'impression_id' => 'nullable|string',
+            'visitor_info' => 'nullable|array',
         ]);
 
         $campaign = Campaign::findOrFail($request->campaign_id);

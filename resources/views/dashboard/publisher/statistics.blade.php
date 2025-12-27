@@ -3,21 +3,13 @@
 @section('title', 'Statistics - Publisher Dashboard')
 
 @section('content')
-    <div class="page-header">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h1>Statistics & Performance</h1>
-                <p class="text-muted">Detailed statistics and performance metrics for your websites.</p>
-            </div>
-            <div style="display: flex; gap: 10px;">
-                <a href="{{ route('dashboard.publisher.analytics.geo') }}" class="btn btn-primary">
-                    <i class="fas fa-globe"></i> Geo Analytics
-                </a>
-                <a href="{{ route('dashboard.publisher.analytics.device') }}" class="btn btn-primary">
-                    <i class="fas fa-mobile-alt"></i> Device Analytics
-                </a>
-            </div>
-        </div>
+    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px;">
+        <a href="{{ route('dashboard.publisher.analytics.geo') }}" class="btn btn-primary">
+            <i class="fas fa-globe"></i> Geo Analytics
+        </a>
+        <a href="{{ route('dashboard.publisher.analytics.device') }}" class="btn btn-primary">
+            <i class="fas fa-mobile-alt"></i> Device Analytics
+        </a>
     </div>
 
     <!-- Date Range Filter -->

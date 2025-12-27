@@ -3,11 +3,6 @@
 @section('title', 'Earnings - Publisher Dashboard')
 
 @section('content')
-    <div class="page-header">
-        <h1>My Earnings</h1>
-        <p class="text-muted">Track your earnings and revenue.</p>
-    </div>
-
     <!-- Summary Cards -->
     <div class="stats-grid">
         <div class="stat-card primary">

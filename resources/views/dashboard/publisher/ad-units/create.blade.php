@@ -3,18 +3,10 @@
 @section('title', 'Create Ad Unit - Publisher Dashboard')
 
 @section('content')
-    <div class="page-header">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h1>Create Ad Unit</h1>
-                <p class="text-muted">Add a new ad unit for {{ $website->domain }}</p>
-            </div>
-            <div>
-                <a href="{{ route('dashboard.publisher.sites.ad-units.index', $website) }}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Back
-                </a>
-            </div>
-        </div>
+    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px;">
+        <a href="{{ route('dashboard.publisher.sites.ad-units.index', $website) }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
     </div>
 
     @if(!in_array($website->status, ['approved', 'verified']))
