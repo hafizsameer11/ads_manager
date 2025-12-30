@@ -3,18 +3,10 @@
 @section('title', 'Campaign Details - Admin Dashboard')
 
 @section('content')
-    <div class="page-header">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h1>Campaign Details</h1>
-                <p class="text-muted">{{ $campaign->name }}</p>
-            </div>
-            <div>
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
                 <a href="{{ route('dashboard.admin.campaigns') }}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Back to Campaigns
                 </a>
-            </div>
-        </div>
     </div>
 
     @if(session('success'))

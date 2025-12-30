@@ -4,29 +4,6 @@
 
 @push('styles')
 <style>
-    /* Enhanced Page Header */
-    .page-header {
-        margin-bottom: 2.5rem;
-        padding-bottom: 1.5rem;
-        border-bottom: 2px solid var(--border-color);
-    }
-
-    .page-header h1 {
-        font-size: 2.25rem;
-        font-weight: 700;
-        color: var(--text-primary);
-        margin-bottom: 0.75rem;
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        letter-spacing: -0.5px;
-    }
-
-    .page-header .text-muted {
-        font-size: 1rem;
-        color: var(--text-secondary);
-    }
 
     /* Stats Grid - Matching Admin Dashboard */
     .stats-grid {
@@ -310,10 +287,6 @@
     }
 
     @media (max-width: 768px) {
-        .page-header h1 {
-            font-size: 1.75rem;
-        }
-
         .stats-grid {
             grid-template-columns: 1fr;
         }

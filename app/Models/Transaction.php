@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Facades\Storage;
 
 class Transaction extends Model
 {
@@ -19,6 +20,7 @@ class Transaction extends Model
         'transaction_id',
         'payment_method',
         'payment_details',
+        'payment_screenshot',
         'notes',
         'processed_at',
     ];
@@ -84,5 +86,16 @@ class Transaction extends Model
     public function scopeCompleted($query)
     {
         return $query->where('status', 'completed');
+    }
+
+    /**
+     * Get the payment screenshot URL.
+     */
+    public function getScreenshotUrlAttribute()
+    {
+        if ($this->payment_screenshot) {
+            return Storage::url($this->payment_screenshot);
+        }
+        return null;
     }
 }

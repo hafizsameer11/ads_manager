@@ -28,10 +28,16 @@ class WithdrawalService
      */
     public function createWithdrawal(Publisher $publisher, float $amount, string $paymentMethod, array $paymentDetails = []): Withdrawal
     {
-        // Validate minimum withdrawal
+        // Validate minimum and maximum withdrawal
         $minimumWithdrawal = $this->paymentService->getMinimumWithdrawal();
+        $maximumWithdrawal = $this->paymentService->getMaximumWithdrawal();
+        
         if ($amount < $minimumWithdrawal) {
             throw new \Exception("Minimum withdrawal amount is {$minimumWithdrawal}");
+        }
+        
+        if ($amount > $maximumWithdrawal) {
+            throw new \Exception("Maximum withdrawal amount is {$maximumWithdrawal}");
         }
 
         // Check if publisher has sufficient balance
@@ -48,14 +54,24 @@ class WithdrawalService
             throw new \Exception('You already have a pending withdrawal request');
         }
 
-        // Create withdrawal
-        $withdrawal = Withdrawal::create([
+        // Prepare withdrawal data
+        $withdrawalData = [
             'publisher_id' => $publisher->id,
             'amount' => $amount,
-            'payment_method' => $paymentMethod,
+            'payment_method' => 'manual', // All withdrawals are now manual
             'payment_details' => $paymentDetails,
             'status' => 'pending',
-        ]);
+        ];
+
+        // Add account type details
+        if (isset($paymentDetails['account_type_id'])) {
+            $withdrawalData['account_type'] = $paymentDetails['account_type'] ?? null;
+            $withdrawalData['account_name'] = $paymentDetails['account_name'] ?? null;
+            $withdrawalData['account_number'] = $paymentDetails['account_number'] ?? null;
+        }
+
+        // Create withdrawal
+        $withdrawal = Withdrawal::create($withdrawalData);
 
         // Deduct from publisher balance
         $publisher->decrement('balance', $amount);
@@ -137,6 +153,8 @@ class WithdrawalService
         ];
     }
 }
+
+
 
 
 

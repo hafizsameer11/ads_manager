@@ -237,7 +237,6 @@
                         <label class="form-label">Role</label>
                         <select name="role" class="form-control">
                             <option value="">All Roles</option>
-                            <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Admin</option>
                             <option value="publisher" {{ request('role') == 'publisher' ? 'selected' : '' }}>Publisher</option>
                             <option value="advertiser" {{ request('role') == 'advertiser' ? 'selected' : '' }}>Advertiser</option>
                         </select>

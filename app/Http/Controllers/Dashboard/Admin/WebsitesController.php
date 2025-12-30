@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Dashboard\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Website;
+use App\Models\Impression;
+use App\Models\Click;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class WebsitesController extends Controller
 {
@@ -62,7 +65,34 @@ class WebsitesController extends Controller
             'disabled' => Website::where('status', 'disabled')->count(),
         ];
         
-        return view('dashboard.admin.websites', compact('websites', 'stats'));
+        // Get daily website statistics for chart (last 30 days)
+        $startDate = now()->subDays(30)->format('Y-m-d');
+        $endDate = now()->format('Y-m-d');
+        
+        $dailyStats = Impression::select(
+                DB::raw('DATE(impression_at) as date'),
+                DB::raw('COUNT(*) as impressions'),
+                DB::raw('SUM(revenue) as revenue')
+            )
+            ->whereBetween('impression_at', [$startDate, $endDate])
+            ->groupBy(DB::raw('DATE(impression_at)'))
+            ->orderBy('date')
+            ->get()
+            ->map(function($stat) use ($startDate, $endDate) {
+                // Get clicks for this date separately
+                $clicks = Click::where('is_fraud', false)
+                    ->whereDate('clicked_at', $stat->date)
+                    ->count();
+                
+                return [
+                    'date' => $stat->date,
+                    'impressions' => $stat->impressions,
+                    'clicks' => $clicks,
+                    'revenue' => $stat->revenue ?? 0,
+                ];
+            });
+        
+        return view('dashboard.admin.websites', compact('websites', 'stats', 'dailyStats'));
     }
 
     /**

@@ -80,7 +80,7 @@
         top: 0;
         width: 100%;
         height: 100%;
-        overflow: hidden;
+        overflow-y: auto;
         outline: 0;
         background-color: rgba(0, 0, 0, 0.5);
     }
@@ -107,6 +107,9 @@
         max-width: 500px;
         margin: 1.75rem auto;
         pointer-events: none;
+        display: flex;
+        align-items: center;
+        min-height: calc(100% - 3.5rem);
     }
 
     .modal.fade .modal-dialog {
@@ -123,6 +126,7 @@
         display: flex;
         flex-direction: column;
         width: 100%;
+        max-height: 90vh;
         pointer-events: auto;
         background-color: #fff;
         background-clip: padding-box;
@@ -130,6 +134,7 @@
         border-radius: 12px;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
         outline: 0;
+        overflow: hidden;
     }
 
     .modal-header {
@@ -183,6 +188,24 @@
         padding: 30px;
         margin-top: 24px;
         margin-bottom: 24px;
+        overflow-y: auto;
+        max-height: calc(90vh - 200px);
+    }
+
+    #markPaidModal .modal-body {
+        max-height: calc(90vh - 180px);
+    }
+
+    #screenshotPreview {
+        max-height: 300px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    #screenshotPreview img {
+        max-width: 100%;
+        height: auto;
+        display: block;
     }
 
     .modal-footer {
@@ -394,11 +417,6 @@
 @endpush
 
 @section('content')
-    <div class="page-header">
-        <h1>Withdrawals Management</h1>
-        <p class="text-muted">Process publisher withdrawal requests.</p>
-    </div>
-
     <!-- Statistics Cards -->
     <div class="stats-grid">
         <div class="stat-card">
@@ -432,16 +450,6 @@
                             <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved</option>
                             <option value="processed" {{ request('status') == 'processed' ? 'selected' : '' }}>Processed</option>
                             <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
-                        </select>
-                    </div>
-                    <div class="filter-field">
-                        <label class="form-label">Payment Method</label>
-                        <select name="payment_method" class="form-control">
-                            <option value="">All Methods</option>
-                            <option value="paypal" {{ request('payment_method') == 'paypal' ? 'selected' : '' }}>PayPal</option>
-                            <option value="coinpayment" {{ request('payment_method') == 'coinpayment' ? 'selected' : '' }}>CoinPayment</option>
-                            <option value="faucetpay" {{ request('payment_method') == 'faucetpay' ? 'selected' : '' }}>FaucetPay</option>
-                            <option value="bank_swift" {{ request('payment_method') == 'bank_swift' ? 'selected' : '' }}>Bank SWIFT</option>
                         </select>
                     </div>
                     <div class="filter-field filter-field-search">
@@ -504,8 +512,8 @@
                             <th>ID</th>
                             <th>Publisher</th>
                             <th>Amount</th>
-                            <th>Payment Method</th>
-                            <th>Payment Details</th>
+                            <th>Account Type</th>
+                            <th>Account Details</th>
                             <th>Status</th>
                             <th>Requested Date</th>
                             <th>Processed Date</th>
@@ -525,9 +533,22 @@
                                     @endif
                                 </td>
                                 <td><strong>${{ number_format($withdrawal->amount, 2) }}</strong></td>
-                                <td>{{ ucfirst(str_replace('_', ' ', $withdrawal->payment_method ?? 'N/A')) }}</td>
                                 <td>
-                                    @if($withdrawal->payment_details)
+                                    @if($withdrawal->account_type)
+                                        <span class="badge badge-info">{{ $withdrawal->account_type }}</span>
+                                    @else
+                                        <span class="text-muted">N/A</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($withdrawal->account_name || $withdrawal->account_number)
+                                        @if($withdrawal->account_name)
+                                            <div><strong>Name:</strong> {{ $withdrawal->account_name }}</div>
+                                        @endif
+                                        @if($withdrawal->account_number)
+                                            <div><strong>Number:</strong> {{ $withdrawal->account_number }}</div>
+                                        @endif
+                                    @elseif($withdrawal->payment_details)
                                         @if(isset($withdrawal->payment_details['account']))
                                             <small>{{ \Illuminate\Support\Str::limit($withdrawal->payment_details['account'], 30) }}</small>
                                         @else
@@ -562,17 +583,14 @@
                                 <td>
                                     <div class="action-buttons">
                                         @if($withdrawal->status === 'pending')
-                                            <form action="{{ route('dashboard.admin.withdrawals.approve', $withdrawal->id) }}" method="POST" class="action-form" onsubmit="return confirm('Are you sure you want to approve this withdrawal?');">
-                                                @csrf
-                                                <button type="submit" class="btn btn-sm btn-success" title="Approve">
-                                                    <i class="fas fa-check"></i>
-                                                </button>
-                                            </form>
+                                            <button type="button" class="btn btn-sm btn-success" title="Approve" onclick="showApproveModal({{ $withdrawal->id }}, '{{ number_format($withdrawal->amount, 2) }}', '{{ $withdrawal->publisher->user->name ?? 'N/A' }}', {{ ($withdrawal->account_type || $withdrawal->account_name || $withdrawal->account_number) ? 'true' : 'false' }}, '{{ $withdrawal->account_type ?? '' }}', '{{ $withdrawal->account_name ?? '' }}', '{{ $withdrawal->account_number ?? '' }}')">
+                                                <i class="fas fa-check"></i>
+                                            </button>
                                             <button type="button" class="btn btn-sm btn-danger" title="Reject" onclick="showRejectModal({{ $withdrawal->id }}, '{{ number_format($withdrawal->amount, 2) }}')">
                                                 <i class="fas fa-times"></i>
                                             </button>
                                         @elseif($withdrawal->status === 'approved')
-                                            <button type="button" class="btn btn-sm btn-primary" title="Mark as Paid" onclick="showMarkPaidModal({{ $withdrawal->id }}, '{{ number_format($withdrawal->amount, 2) }}')">
+                                            <button type="button" class="btn btn-sm btn-primary" title="Mark as Paid" onclick="showMarkPaidModal({{ $withdrawal->id }}, '{{ number_format($withdrawal->amount, 2) }}', true)">
                                                 <i class="fas fa-money-check"></i>
                                             </button>
                                         @endif
@@ -591,6 +609,54 @@
             <!-- Pagination -->
             <div class="mt-3">
                 {{ $withdrawals->links() }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Approve Modal -->
+    <div class="modal fade" id="approveModal" tabindex="-1" role="dialog" aria-labelledby="approveModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <form id="approveForm" method="POST">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="approveModalLabel">Approve Withdrawal</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p style="margin-bottom: 16px;">Are you sure you want to approve withdrawal of <strong id="approveAmount"></strong> for <strong id="approvePublisher"></strong>?</p>
+                        
+                        <!-- Account Details Section -->
+                        <div id="approveAccountInfo" style="display: none; margin-bottom: 20px;">
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; border-left: 4px solid #007bff;">
+                                <strong style="display: block; margin-bottom: 10px;">Account Details:</strong>
+                                <div style="margin-bottom: 8px;">
+                                    <strong>Account Type:</strong> <span id="approveAccountType"></span>
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong>Account Name:</strong> <span id="approveAccountName"></span>
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong>Account Number:</strong> <code id="approveAccountNumber" style="background: white; padding: 4px 8px; border-radius: 4px;"></code>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <p class="text-success" style="margin-bottom: 24px; padding: 12px; background-color: #d4edda; border-left: 4px solid #28a745; border-radius: 4px;">
+                            <i class="fas fa-info-circle"></i> <small>The withdrawal will be marked as approved and ready for processing.</small>
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check-circle"></i> Approve Withdrawal
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -634,7 +700,7 @@
     <div class="modal fade" id="markPaidModal" tabindex="-1" role="dialog" aria-labelledby="markPaidModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
-                <form id="markPaidForm" method="POST">
+                <form id="markPaidForm" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="modal-header">
                         <h5 class="modal-title" id="markPaidModalLabel">Mark Withdrawal as Paid</h5>
@@ -644,6 +710,17 @@
                     </div>
                     <div class="modal-body">
                         <p style="margin-bottom: 24px;">Mark withdrawal for <strong id="paidAmount"></strong> as processed/paid?</p>
+                        
+                        <!-- Payment Screenshot Section -->
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="payment_screenshot">Payment Screenshot <span class="text-danger">*</span></label>
+                            <input type="file" id="payment_screenshot" name="payment_screenshot" class="form-control" accept="image/*" required>
+                            <small class="text-muted">Upload a screenshot of the payment transaction</small>
+                            <div id="screenshotPreview" style="margin-top: 10px; display: none;">
+                                <img id="previewImg" src="" alt="Preview" style="max-width: 100%; max-height: 200px; border-radius: 6px; border: 1px solid #ddd;">
+                            </div>
+                        </div>
+                        
                         <div class="form-group" style="margin-bottom: 0;">
                             <label for="transaction_id">Transaction ID (Optional)</label>
                             <input type="text" id="transaction_id" name="transaction_id" class="form-control" placeholder="Enter transaction ID or reference number...">
@@ -668,7 +745,7 @@
 <script>
     // Modal functionality with vanilla JavaScript
     document.addEventListener('DOMContentLoaded', function() {
-        const modals = ['rejectModal', 'markPaidModal'];
+        const modals = ['rejectModal', 'markPaidModal', 'approveModal'];
         modals.forEach(function(modalId) {
             const modal = document.getElementById(modalId);
             if (modal) {
@@ -704,7 +781,14 @@
         if (modal) {
             modal.style.display = 'block';
             modal.classList.add('show');
+            // Prevent body scroll but allow modal scroll
             document.body.style.overflow = 'hidden';
+            // Scroll modal to top
+            modal.scrollTop = 0;
+            const modalDialog = modal.querySelector('.modal-dialog');
+            if (modalDialog) {
+                modalDialog.scrollTop = 0;
+            }
         }
     }
 
@@ -714,6 +798,40 @@
             modal.classList.remove('show');
             document.body.style.overflow = '';
         }
+    }
+
+    function showApproveModal(id, amount, publisher, hasAccountDetails, accountType, accountName, accountNumber) {
+        const form = document.getElementById('approveForm');
+        if (form) {
+            form.reset();
+        }
+        
+        const amountElement = document.getElementById('approveAmount');
+        if (amountElement) {
+            amountElement.textContent = '$' + amount;
+        }
+        
+        const publisherElement = document.getElementById('approvePublisher');
+        if (publisherElement) {
+            publisherElement.textContent = publisher;
+        }
+        
+        // Show/hide account details
+        const accountInfo = document.getElementById('approveAccountInfo');
+        if (hasAccountDetails && accountInfo) {
+            accountInfo.style.display = 'block';
+            document.getElementById('approveAccountType').textContent = accountType || 'N/A';
+            document.getElementById('approveAccountName').textContent = accountName || 'N/A';
+            document.getElementById('approveAccountNumber').textContent = accountNumber || 'N/A';
+        } else if (accountInfo) {
+            accountInfo.style.display = 'none';
+        }
+        
+        if (form) {
+            form.action = '{{ route("dashboard.admin.withdrawals.approve", ":id") }}'.replace(':id', id);
+        }
+        
+        showModal('approveModal');
     }
 
     function showRejectModal(id, amount) {
@@ -747,12 +865,41 @@
         if (amountElement) {
             amountElement.textContent = '$' + amount;
         }
+        
+        // Reset preview
+        const preview = document.getElementById('screenshotPreview');
+        const previewImg = document.getElementById('previewImg');
+        if (preview) preview.style.display = 'none';
+        if (previewImg) previewImg.src = '';
+        
         if (form) {
             form.action = '{{ route("dashboard.admin.withdrawals.mark-paid", ":id") }}'.replace(':id', id);
         }
         
         showModal('markPaidModal');
     }
+
+    // Preview screenshot
+    document.addEventListener('DOMContentLoaded', function() {
+        const screenshotInput = document.getElementById('payment_screenshot');
+        if (screenshotInput) {
+            screenshotInput.addEventListener('change', function(e) {
+                const preview = document.getElementById('screenshotPreview');
+                const previewImg = document.getElementById('previewImg');
+                
+                if (e.target.files && e.target.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImg.src = e.target.result;
+                        preview.style.display = 'block';
+                    };
+                    reader.readAsDataURL(e.target.files[0]);
+                } else {
+                    preview.style.display = 'none';
+                }
+            });
+        }
+    });
 </script>
 @endpush
 

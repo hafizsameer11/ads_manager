@@ -3,11 +3,6 @@
 @section('title', 'My Campaigns - Advertiser Dashboard')
 
 @section('content')
-    <div class="page-header">
-        <h1>My Campaigns</h1>
-        <p class="text-muted">Manage and monitor your advertising campaigns.</p>
-    </div>
-
     <!-- Statistics Cards -->
     <div class="stats-grid">
         <div class="stat-card">

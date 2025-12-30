@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Dashboard\Publisher;
 
 use App\Http\Controllers\Controller;
 use App\Models\Withdrawal;
+use App\Models\AllowedAccountType;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -33,12 +35,20 @@ class PaymentsController extends Controller
         
         $withdrawals = $query->latest()->paginate(20);
         
+        // Get enabled allowed account types
+        $allowedAccountTypes = AllowedAccountType::enabled()->ordered()->get();
+        
+        // Get withdrawal limits from settings
+        $minimumPayout = Setting::get('minimum_payout', 50);
+        $maximumPayout = Setting::get('maximum_payout', 10000);
+        
         // Payment summary
         $summary = [
             'available_balance' => $publisher->balance ?? 0,
             'pending_balance' => $publisher->pending_balance ?? 0,
-            'minimum_payout' => $publisher->minimum_payout ?? 0,
-            'can_withdraw' => ($publisher->balance ?? 0) >= ($publisher->minimum_payout ?? 0) && ($publisher->status ?? '') === 'approved',
+            'minimum_payout' => $minimumPayout,
+            'maximum_payout' => $maximumPayout,
+            'can_withdraw' => ($publisher->balance ?? 0) >= $minimumPayout && ($publisher->status ?? '') === 'approved',
             'total_withdrawn' => Withdrawal::where('publisher_id', $publisher->id)
                 ->where('status', 'completed')
                 ->sum('amount'),
@@ -47,7 +57,7 @@ class PaymentsController extends Controller
                 ->sum('amount'),
         ];
         
-        return view('dashboard.publisher.payments', compact('withdrawals', 'summary'));
+        return view('dashboard.publisher.payments', compact('withdrawals', 'summary', 'allowedAccountTypes'));
     }
 
     /**
@@ -58,12 +68,17 @@ class PaymentsController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'amount' => 'required|numeric|min:1',
-            'payment_method' => 'required|in:paypal,coinpayment,faucetpay,bank_swift,manual',
-            'payment_details' => 'required|array',
-            'payment_details.account' => 'required|string|max:255',
-        ]);
+        $minimumPayout = Setting::get('minimum_payout', 50);
+        $maximumPayout = Setting::get('maximum_payout', 10000);
+        
+        $validationRules = [
+            'amount' => "required|numeric|min:{$minimumPayout}|max:{$maximumPayout}",
+            'account_type_id' => 'required|exists:allowed_account_types,id',
+            'account_name' => 'required|string|max:255',
+            'account_number' => 'required|string|max:255',
+        ];
+
+        $request->validate($validationRules);
 
         $user = Auth::user();
         $publisher = $user->publisher;
@@ -76,13 +91,28 @@ class PaymentsController extends Controller
             return back()->withErrors(['error' => 'Your account must be approved to make withdrawals.']);
         }
 
+        // Check if publisher has sufficient balance
+        if ($publisher->balance < $request->amount) {
+            return back()->withErrors(['error' => 'Insufficient balance.']);
+        }
+
         try {
             $withdrawalService = app(\App\Services\WithdrawalService::class);
+            
+            $accountType = AllowedAccountType::findOrFail($request->account_type_id);
+            
+            $paymentDetails = [
+                'account_type_id' => $accountType->id,
+                'account_type' => $accountType->name,
+                'account_name' => $request->account_name,
+                'account_number' => $request->account_number,
+            ];
+            
             $withdrawal = $withdrawalService->createWithdrawal(
                 $publisher,
                 $request->amount,
-                $request->payment_method,
-                $request->payment_details
+                'manual', // All withdrawals are now manual
+                $paymentDetails
             );
 
             return back()->with('success', 'Withdrawal request submitted successfully.');

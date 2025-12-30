@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Dashboard\Advertiser;
 
 use App\Http\Controllers\Controller;
 use App\Models\Transaction;
+use App\Models\ManualPaymentAccount;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class BillingController extends Controller
 {
@@ -47,6 +50,23 @@ class BillingController extends Controller
         
         $transactions = $query->latest()->paginate(20);
         
+        // Get enabled manual payment accounts
+        $manualPaymentAccounts = ManualPaymentAccount::enabled()->ordered()->get();
+        
+        // Get enabled payment gateways from admin settings
+        $enabledPaymentGateways = Setting::get('payment_gateways', []);
+        
+        // Check if automatic payment gateways are enabled (they only need their specific enable setting)
+        $stripeEnabled = Setting::get('stripe_enabled', false);
+        $stripePublishableKey = $stripeEnabled ? Setting::get('stripe_publishable_key', '') : '';
+        $paypalEnabled = Setting::get('paypal_enabled', false);
+        $coinpaymentsEnabled = Setting::get('coinpayments_enabled', false);
+        
+        // Check which other payment methods are enabled
+        $faucetpayEnabled = in_array('faucetpay', $enabledPaymentGateways);
+        $bankSwiftEnabled = in_array('bank_swift', $enabledPaymentGateways);
+        $wiseEnabled = in_array('wise', $enabledPaymentGateways);
+        
         // Summary
         $summary = [
             'balance' => $advertiser->balance ?? 0,
@@ -69,7 +89,18 @@ class BillingController extends Controller
                 ->sum('amount'),
         ];
         
-        return view('dashboard.advertiser.billing', compact('transactions', 'summary'));
+        return view('dashboard.advertiser.billing', compact(
+            'transactions', 
+            'summary', 
+            'manualPaymentAccounts', 
+            'stripeEnabled', 
+            'stripePublishableKey', 
+            'paypalEnabled', 
+            'coinpaymentsEnabled',
+            'faucetpayEnabled',
+            'bankSwiftEnabled',
+            'wiseEnabled'
+        ));
     }
 
     /**
@@ -80,12 +111,53 @@ class BillingController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        // Build allowed payment methods based on enabled gateways
+        $allowedMethods = [];
+        $enabledGateways = Setting::get('payment_gateways', []);
+        
+        // Automatic payment gateways only need their specific enable setting
+        if (Setting::get('paypal_enabled', false)) {
+            $allowedMethods[] = 'paypal';
+        }
+        if (Setting::get('coinpayments_enabled', false)) {
+            $allowedMethods[] = 'coinpayment';
+        }
+        if (Setting::get('stripe_enabled', false)) {
+            $allowedMethods[] = 'stripe';
+        }
+        if (in_array('faucetpay', $enabledGateways)) {
+            $allowedMethods[] = 'faucetpay';
+        }
+        if (in_array('bank_swift', $enabledGateways)) {
+            $allowedMethods[] = 'bank_swift';
+        }
+        if (in_array('wise', $enabledGateways)) {
+            $allowedMethods[] = 'wise';
+        }
+        if (ManualPaymentAccount::enabled()->count() > 0) {
+            $allowedMethods[] = 'manual';
+        }
+
+        // If no methods are enabled, fallback to prevent validation error
+        if (empty($allowedMethods)) {
+            $allowedMethods = ['manual']; // At least allow manual if nothing else
+        }
+
+        $validationRules = [
             'amount' => 'required|numeric|min:10',
-            'payment_method' => 'required|in:paypal,coinpayment,faucetpay,stripe,bank_swift,wise',
+            'payment_method' => 'required|in:' . implode(',', $allowedMethods),
             'transaction_id' => 'nullable|string|max:255',
             'notes' => 'nullable|string|max:500',
-        ]);
+        ];
+
+        // If manual payment method, require screenshot and transaction ID
+        if ($request->payment_method === 'manual') {
+            $validationRules['manual_payment_account_id'] = 'required|exists:manual_payment_accounts,id';
+            $validationRules['transaction_id'] = 'required|string|max:255';
+            $validationRules['payment_screenshot'] = 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120'; // 5MB max
+        }
+
+        $request->validate($validationRules);
 
         $user = Auth::user();
         $advertiser = $user->advertiser;
@@ -96,6 +168,19 @@ class BillingController extends Controller
 
         if ($advertiser->status !== 'approved') {
             return back()->withErrors(['error' => 'Your account must be approved to make deposits.']);
+        }
+
+        // Automatic payment gateways are handled separately via checkout
+        if ($request->payment_method === 'stripe') {
+            return redirect()->route('dashboard.advertiser.stripe.checkout', ['amount' => $request->amount]);
+        }
+        
+        if ($request->payment_method === 'paypal') {
+            return redirect()->route('dashboard.advertiser.paypal.checkout', ['amount' => $request->amount]);
+        }
+        
+        if ($request->payment_method === 'coinpayment') {
+            return redirect()->route('dashboard.advertiser.coinpayments.checkout', ['amount' => $request->amount]);
         }
 
         try {
@@ -109,11 +194,27 @@ class BillingController extends Controller
                 $paymentDetails['notes'] = $request->notes;
             }
             
+            // Handle manual payment account
+            if ($request->payment_method === 'manual' && $request->manual_payment_account_id) {
+                $manualAccount = ManualPaymentAccount::findOrFail($request->manual_payment_account_id);
+                $paymentDetails['manual_payment_account_id'] = $manualAccount->id;
+                $paymentDetails['manual_payment_account_name'] = $manualAccount->account_name;
+                $paymentDetails['manual_payment_account_type'] = $manualAccount->account_type;
+                $paymentDetails['manual_payment_account_number'] = $manualAccount->account_number;
+            }
+            
+            // Handle screenshot upload for manual payments
+            $screenshotPath = null;
+            if ($request->hasFile('payment_screenshot')) {
+                $screenshotPath = $request->file('payment_screenshot')->store('deposit-screenshots', 'public');
+            }
+            
             $transaction = $paymentService->processDeposit(
                 $advertiser,
                 $request->amount,
                 $request->payment_method,
-                $paymentDetails
+                $paymentDetails,
+                $screenshotPath
             );
 
             return back()->with('success', "Deposit request of $" . number_format($request->amount, 2) . " submitted successfully! Your balance will be updated once admin approves the deposit.");

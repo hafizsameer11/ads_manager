@@ -32,11 +32,6 @@ class WithdrawalsController extends Controller
             $query->where('status', $request->status);
         }
         
-        // Filter by payment method
-        if ($request->filled('payment_method')) {
-            $query->where('payment_method', $request->payment_method);
-        }
-        
         // Search
         if ($request->filled('search')) {
             $search = $request->search;
@@ -196,15 +191,26 @@ class WithdrawalsController extends Controller
             return back()->withErrors(['error' => 'Only approved withdrawals can be marked as paid.']);
         }
 
-        $request->validate([
+        $validationRules = [
             'transaction_id' => 'nullable|string|max:255',
-        ]);
+            'payment_screenshot' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120', // 5MB max
+        ];
 
-        $withdrawal->update([
+        $request->validate($validationRules);
+
+        $updateData = [
             'status' => 'processed',
             'transaction_id' => $request->transaction_id,
             'processed_at' => now(),
-        ]);
+        ];
+
+        // Handle screenshot upload
+        if ($request->hasFile('payment_screenshot')) {
+            $screenshotPath = $request->file('payment_screenshot')->store('withdrawal-screenshots', 'public');
+            $updateData['payment_screenshot'] = $screenshotPath;
+        }
+
+        $withdrawal->update($updateData);
         
         // Send notification to publisher
         if ($withdrawal->publisher && $withdrawal->publisher->user) {

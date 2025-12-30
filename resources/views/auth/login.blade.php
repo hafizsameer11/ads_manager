@@ -30,8 +30,11 @@
                     <form action="{{ route('login.submit') }}" method="POST">
                         @csrf
                         <div class="form-group">
-                            <label for="email">Email</label>
-                            <input type="email" id="email" name="email" value="{{ old('email') }}" placeholder="Enter your email" required autofocus>
+                            <label for="login">Username or Email</label>
+                            <input type="text" id="login" name="login" value="{{ old('login') }}" placeholder="Enter your username or email" required autofocus>
+                            @error('login')
+                                <span style="color: #dc3545; font-size: 14px; margin-top: 5px; display: block;">{{ $message }}</span>
+                            @enderror
                         </div>
                         <div class="form-group">
                             <label for="password">Password</label>

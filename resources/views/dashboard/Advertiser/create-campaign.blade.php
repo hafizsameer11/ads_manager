@@ -3,11 +3,6 @@
 @section('title', 'Create Campaign - Advertiser Dashboard')
 
 @section('content')
-    <div class="page-header">
-        <h1>Create New Campaign</h1>
-        <p class="text-muted">Set up a new advertising campaign.</p>
-    </div>
-
     <!-- Create Campaign Form -->
     <div class="card">
         <div class="card-header">

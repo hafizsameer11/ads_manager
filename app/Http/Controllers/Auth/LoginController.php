@@ -35,32 +35,65 @@ class LoginController extends Controller
      */
     public function login(Request $request)
     {
-        // Accept either username or email
-        $username = $request->input('username');
-        $email = $request->input('email');
+        // Accept either username or email from 'login' field, or fallback to 'username'/'email' for backward compatibility
+        $login = $request->input('login') ?: $request->input('username') ?: $request->input('email');
         
-        // Determine which field is being used
-        if (!empty($username)) {
-            $loginField = 'username';
-            $loginValue = $username;
-            $validationRules = ['username' => 'required|string', 'password' => 'required|string'];
-        } else {
-            $loginField = 'email';
-            $loginValue = $email;
-            $validationRules = ['email' => 'required|email', 'password' => 'required|string'];
-        }
-        
-        $request->validate($validationRules);
+        // Validate that we have a login value and password
+        $request->validate([
+            'login' => 'sometimes|string',
+            'username' => 'sometimes|string',
+            'email' => 'sometimes|email',
+            'password' => 'required|string',
+        ]);
 
-        // Build credentials array
-        $credentials = [
-            $loginField => $loginValue,
-            'password' => $request->password,
-        ];
-        
+        if (empty($login)) {
+            throw ValidationException::withMessages([
+                'login' => ['Please provide either username or email.'],
+            ]);
+        }
+
+        $password = $request->password;
         $remember = $request->boolean('remember');
 
-        if (Auth::attempt($credentials, $remember)) {
+        // Determine if the input looks like an email
+        $isEmail = filter_var($login, FILTER_VALIDATE_EMAIL) !== false;
+
+        // Try to authenticate with email first if it looks like an email, otherwise try username
+        // If first attempt fails, try the other method as fallback
+        $authenticated = false;
+        $loginField = null;
+
+        if ($isEmail) {
+            // Try email first
+            $credentials = ['email' => $login, 'password' => $password];
+            if (Auth::attempt($credentials, $remember)) {
+                $authenticated = true;
+                $loginField = 'email';
+            } else {
+                // Fallback to username
+                $credentials = ['username' => $login, 'password' => $password];
+                if (Auth::attempt($credentials, $remember)) {
+                    $authenticated = true;
+                    $loginField = 'username';
+                }
+            }
+        } else {
+            // Try username first
+            $credentials = ['username' => $login, 'password' => $password];
+            if (Auth::attempt($credentials, $remember)) {
+                $authenticated = true;
+                $loginField = 'username';
+            } else {
+                // Fallback to email
+                $credentials = ['email' => $login, 'password' => $password];
+                if (Auth::attempt($credentials, $remember)) {
+                    $authenticated = true;
+                    $loginField = 'email';
+                }
+            }
+        }
+
+        if ($authenticated) {
             $request->session()->regenerate();
 
             $user = Auth::user();
@@ -69,7 +102,7 @@ class LoginController extends Controller
             if (!$user->is_active) {
                 Auth::logout();
                 return back()->withErrors([
-                    $loginField => 'Your account has been deactivated. Please contact support.',
+                    'login' => 'Your account has been deactivated. Please contact support.',
                 ]);
             }
 
@@ -81,7 +114,7 @@ class LoginController extends Controller
         }
 
         throw ValidationException::withMessages([
-            $loginField => ['The provided credentials do not match our records.'],
+            'login' => ['The provided credentials do not match our records.'],
         ]);
     }
 

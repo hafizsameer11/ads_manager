@@ -80,7 +80,8 @@
         top: 0;
         width: 100%;
         height: 100%;
-        overflow: hidden;
+        overflow-y: auto;
+        overflow-x: hidden;
         outline: 0;
         background-color: rgba(0, 0, 0, 0.5);
     }
@@ -104,18 +105,26 @@
     .modal-dialog {
         position: relative;
         width: auto;
-        max-width: 500px;
+        max-width: 600px;
         margin: 1.75rem auto;
         pointer-events: none;
     }
 
+    .modal-dialog-centered {
+        display: flex;
+        align-items: center;
+        min-height: calc(100% - 3.5rem);
+    }
+
     .modal.fade .modal-dialog {
-        transition: transform 0.3s ease-out;
+        transition: transform 0.3s ease-out, opacity 0.3s ease-out;
         transform: translate(0, -50px);
+        opacity: 0;
     }
 
     .modal.show .modal-dialog {
-        transform: none;
+        transform: translate(0, 0);
+        opacity: 1;
     }
 
     .modal-content {
@@ -123,6 +132,7 @@
         display: flex;
         flex-direction: column;
         width: 100%;
+        max-height: 90vh;
         pointer-events: auto;
         background-color: #fff;
         background-clip: padding-box;
@@ -130,6 +140,7 @@
         border-radius: 12px;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
         outline: 0;
+        overflow: hidden;
     }
 
     .modal-header {
@@ -183,6 +194,9 @@
         padding: 30px;
         margin-top: 24px;
         margin-bottom: 24px;
+        overflow-y: auto;
+        max-height: calc(90vh - 200px);
+        flex: 1 1 auto;
     }
 
     .modal-footer {
@@ -460,11 +474,6 @@
 @endpush
 
 @section('content')
-    <div class="page-header">
-        <h1>Deposits Management</h1>
-        <p class="text-muted">Review and approve advertiser deposit requests.</p>
-    </div>
-
     <!-- Statistics Cards -->
     <div class="stats-grid">
         <div class="stat-card">
@@ -517,6 +526,7 @@
                             <option value="stripe" {{ request('payment_method') == 'stripe' ? 'selected' : '' }}>Stripe</option>
                             <option value="bank_swift" {{ request('payment_method') == 'bank_swift' ? 'selected' : '' }}>Bank SWIFT</option>
                             <option value="wise" {{ request('payment_method') == 'wise' ? 'selected' : '' }}>Wise</option>
+                            <option value="manual" {{ request('payment_method') == 'manual' ? 'selected' : '' }}>Manual Payment</option>
                         </select>
                     </div>
                     <div class="filter-field filter-field-search">
@@ -581,6 +591,7 @@
                             <th>Amount</th>
                             <th>Payment Method</th>
                             <th>Transaction ID</th>
+                            <th>Screenshot</th>
                             <th>Status</th>
                             <th>Requested Date</th>
                             <th>Processed Date</th>
@@ -605,6 +616,15 @@
                                     <code style="font-size: 11px;">{{ $deposit->transaction_id ?? 'N/A' }}</code>
                                 </td>
                                 <td>
+                                    @if($deposit->payment_method === 'manual' && $deposit->payment_screenshot)
+                                        <button type="button" class="btn btn-sm btn-info" onclick="showScreenshotModal('{{ addslashes($deposit->screenshot_url) }}', '{{ addslashes($deposit->transaction_id ?? 'N/A') }}')" title="View Screenshot">
+                                            <i class="fas fa-image"></i> View
+                                        </button>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                <td>
                                     @if($deposit->status === 'pending')
                                         <span class="badge badge-warning">Pending</span>
                                     @elseif($deposit->status === 'completed')
@@ -627,7 +647,7 @@
                                 <td>
                                     <div class="action-buttons">
                                         @if($deposit->status === 'pending')
-                                            <button type="button" class="btn btn-sm btn-success" title="Approve" onclick="showApproveModal({{ $deposit->id }}, '{{ number_format($deposit->amount, 2) }}', '{{ $deposit->transactionable->user->name ?? 'N/A' }}')">
+                                            <button type="button" class="btn btn-sm btn-success" title="Approve" onclick="showApproveModal({{ $deposit->id }}, '{{ number_format($deposit->amount, 2) }}', '{{ addslashes($deposit->transactionable->user->name ?? 'N/A') }}', {{ $deposit->payment_method === 'manual' && $deposit->payment_screenshot ? 'true' : 'false' }}, '{{ $deposit->payment_method === 'manual' && $deposit->payment_screenshot ? addslashes($deposit->screenshot_url) : '' }}', '{{ addslashes($deposit->transaction_id ?? '') }}')">
                                                 <i class="fas fa-check"></i> Approve
                                             </button>
                                             <button type="button" class="btn btn-sm btn-danger" title="Reject" onclick="showRejectModal({{ $deposit->id }}, '{{ number_format($deposit->amount, 2) }}')">
@@ -641,7 +661,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9" class="text-center text-muted">No deposits found</td>
+                                <td colspan="10" class="text-center text-muted">No deposits found</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -669,6 +689,23 @@
                     </div>
                     <div class="modal-body">
                         <p style="margin-bottom: 16px;">Are you sure you want to approve deposit of <strong id="approveAmount"></strong> from <strong id="approveAdvertiser"></strong>?</p>
+                        
+                        <!-- Manual Payment Screenshot Section -->
+                        <div id="manualPaymentInfo" style="display: none; margin-bottom: 20px;">
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; border-left: 4px solid #007bff;">
+                                <strong style="display: block; margin-bottom: 10px;">Manual Payment Details:</strong>
+                                <div style="margin-bottom: 10px;">
+                                    <strong>Transaction ID:</strong> <code id="approveTransactionId" style="background: white; padding: 4px 8px; border-radius: 4px;"></code>
+                                </div>
+                                <div style="margin-bottom: 10px;">
+                                    <strong>Payment Screenshot:</strong>
+                                    <div style="margin-top: 10px; max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 6px; padding: 10px; background: white;">
+                                        <img id="approveScreenshot" src="" alt="Payment Screenshot" style="max-width: 100%; border-radius: 6px; cursor: pointer; display: block;" onclick="showScreenshotModal(this.src, document.getElementById('approveTransactionId').textContent)">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <p class="text-success" style="margin-bottom: 24px; padding: 12px; background-color: #d4edda; border-left: 4px solid #28a745; border-radius: 4px;">
                             <i class="fas fa-info-circle"></i> <small>The amount will be added to the advertiser's balance.</small>
                         </p>
@@ -686,6 +723,29 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screenshot Modal -->
+    <div class="modal fade" id="screenshotModal" tabindex="-1" role="dialog" aria-labelledby="screenshotModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="screenshotModalLabel">Payment Screenshot</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" style="text-align: center;">
+                    <p style="margin-bottom: 15px;"><strong>Transaction ID:</strong> <code id="screenshotModalTid"></code></p>
+                    <img id="screenshotModalImg" src="" alt="Payment Screenshot" style="max-width: 100%; border-radius: 6px; border: 1px solid #ddd;">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -730,7 +790,7 @@
 <script>
     // Modal functionality with vanilla JavaScript
     document.addEventListener('DOMContentLoaded', function() {
-        const modals = ['approveModal', 'rejectModal'];
+        const modals = ['approveModal', 'rejectModal', 'screenshotModal'];
         modals.forEach(function(modalId) {
             const modal = document.getElementById(modalId);
             if (modal) {
@@ -766,7 +826,16 @@
         if (modal) {
             modal.style.display = 'block';
             modal.classList.add('show');
+            // Scroll modal to top
+            modal.scrollTop = 0;
+            // Prevent body scroll but allow modal scroll
             document.body.style.overflow = 'hidden';
+            // Ensure modal dialog is visible
+            const modalDialog = modal.querySelector('.modal-dialog');
+            if (modalDialog) {
+                modalDialog.style.marginTop = '1.75rem';
+                modalDialog.style.marginBottom = '1.75rem';
+            }
         }
     }
 
@@ -778,7 +847,7 @@
         }
     }
 
-    function showApproveModal(id, amount, advertiser) {
+    function showApproveModal(id, amount, advertiser, hasScreenshot = false, screenshotUrl = '', transactionId = '') {
         const form = document.getElementById('approveForm');
         if (form) {
             form.reset();
@@ -796,11 +865,27 @@
             advertiserElement.textContent = advertiser;
         }
         
+        // Handle manual payment screenshot
+        const manualPaymentInfo = document.getElementById('manualPaymentInfo');
+        if (hasScreenshot && screenshotUrl) {
+            manualPaymentInfo.style.display = 'block';
+            document.getElementById('approveScreenshot').src = screenshotUrl;
+            document.getElementById('approveTransactionId').textContent = transactionId || 'N/A';
+        } else {
+            manualPaymentInfo.style.display = 'none';
+        }
+        
         if (form) {
             form.action = '{{ route("dashboard.admin.deposits.approve", ":id") }}'.replace(':id', id);
         }
         
         showModal('approveModal');
+    }
+
+    function showScreenshotModal(screenshotUrl, transactionId) {
+        document.getElementById('screenshotModalImg').src = screenshotUrl;
+        document.getElementById('screenshotModalTid').textContent = transactionId || 'N/A';
+        showModal('screenshotModal');
     }
 
     function showRejectModal(id, amount) {

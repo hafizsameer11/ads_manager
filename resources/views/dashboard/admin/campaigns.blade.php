@@ -394,11 +394,6 @@
 @endpush
 
 @section('content')
-    <div class="page-header">
-        <h1>Campaigns Management</h1>
-        <p class="text-muted">Manage and monitor all campaigns.</p>
-    </div>
-
     <!-- Statistics Cards -->
     <div class="stats-grid">
         <div class="stat-card">

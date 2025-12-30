@@ -26,10 +26,11 @@ class UsersController extends Controller
      */
     public function index(Request $request)
     {
-        $query = User::with(['publisher', 'advertiser']);
+        $query = User::with(['publisher', 'advertiser'])
+            ->where('role', '!=', 'admin'); // Exclude admin users from the list
         
-        // Filter by role
-        if ($request->filled('role')) {
+        // Filter by role (but never allow admin role filter)
+        if ($request->filled('role') && $request->role !== 'admin') {
             $query->where('role', $request->role);
         }
         
@@ -53,13 +54,13 @@ class UsersController extends Controller
         
         $users = $query->latest()->paginate(20);
         
-        // Stats
+        // Stats (excluding admins from total count)
         $stats = [
-            'total' => User::count(),
+            'total' => User::where('role', '!=', 'admin')->count(),
             'publishers' => User::where('role', 'publisher')->count(),
             'advertisers' => User::where('role', 'advertiser')->count(),
             'admins' => User::where('role', 'admin')->count(),
-            'active' => User::where('is_active', true)->count(),
+            'active' => User::where('role', '!=', 'admin')->where('is_active', true)->count(),
         ];
         
         return view('dashboard.admin.users', compact('users', 'stats'));

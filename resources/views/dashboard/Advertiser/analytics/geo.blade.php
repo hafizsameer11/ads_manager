@@ -3,21 +3,13 @@
 @section('title', 'Geo Analytics - Advertiser Dashboard')
 
 @section('content')
-    <div class="page-header">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h1>Geo Analytics</h1>
-                <p class="text-muted">View campaign performance by country.</p>
-            </div>
-            <div style="display: flex; gap: 10px;">
-                <a href="{{ route('dashboard.advertiser.analytics') }}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Back to Analytics
-                </a>
-                <a href="{{ route('dashboard.advertiser.analytics.device') }}" class="btn btn-primary">
-                    <i class="fas fa-mobile-alt"></i> Device Analytics
-                </a>
-            </div>
-        </div>
+    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px;">
+        <a href="{{ route('dashboard.advertiser.analytics') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Analytics
+        </a>
+        <a href="{{ route('dashboard.advertiser.analytics.device') }}" class="btn btn-primary">
+            <i class="fas fa-mobile-alt"></i> Device Analytics
+        </a>
     </div>
 
     <!-- Filters -->

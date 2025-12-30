@@ -3,18 +3,10 @@
 @section('title', 'Website Details - Admin Dashboard')
 
 @section('content')
-    <div class="page-header">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h1>Website Details</h1>
-                <p class="text-muted">{{ $website->domain }}</p>
-            </div>
-            <div>
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
                 <a href="{{ route('dashboard.admin.websites') }}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Back to Websites
                 </a>
-            </div>
-        </div>
     </div>
 
     @if(session('success'))

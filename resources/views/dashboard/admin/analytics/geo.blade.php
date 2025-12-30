@@ -3,21 +3,13 @@
 @section('title', 'Geo Analytics - Admin Dashboard')
 
 @section('content')
-    <div class="page-header">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h1>Geo Analytics</h1>
-                <p class="text-muted">View analytics breakdown by country.</p>
-            </div>
-            <div style="display: flex; gap: 10px;">
+    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px;">
                 <a href="{{ route('dashboard.admin.reports') }}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Back to Reports
                 </a>
                 <a href="{{ route('dashboard.admin.analytics.device') }}" class="btn btn-primary">
                     <i class="fas fa-mobile-alt"></i> Device Analytics
                 </a>
-            </div>
-        </div>
     </div>
 
     <!-- Date Range Filter -->

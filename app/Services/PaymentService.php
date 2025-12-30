@@ -16,9 +16,10 @@ class PaymentService
      * @param  float  $amount
      * @param  string  $paymentMethod
      * @param  array  $paymentDetails
+     * @param  string|null  $screenshotPath
      * @return Transaction
      */
-    public function processDeposit(Advertiser $advertiser, float $amount, string $paymentMethod, array $paymentDetails = []): Transaction
+    public function processDeposit(Advertiser $advertiser, float $amount, string $paymentMethod, array $paymentDetails = [], ?string $screenshotPath = null): Transaction
     {
         // Generate transaction ID if not provided
         $transactionId = ($paymentDetails['transaction_id'] ?? null) ?: ('TXN-' . strtoupper(Str::random(16)));
@@ -39,6 +40,7 @@ class PaymentService
             'payment_details' => array_merge($paymentDetails, [
                 'requested_at' => now()->toDateTimeString(),
             ]),
+            'payment_screenshot' => $screenshotPath,
             'notes' => $notes,
         ]);
 
@@ -147,6 +149,16 @@ class PaymentService
     public function getMinimumWithdrawal(): float
     {
         return (float) Setting::get('minimum_payout', 50.00);
+    }
+
+    /**
+     * Get maximum withdrawal amount.
+     *
+     * @return float
+     */
+    public function getMaximumWithdrawal(): float
+    {
+        return (float) Setting::get('maximum_payout', 10000.00);
     }
 }
 

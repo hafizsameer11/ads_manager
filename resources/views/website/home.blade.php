@@ -36,9 +36,9 @@
                     <form action="{{ route('login.submit') }}" method="POST">
                         @csrf
                         <div class="form-group">
-                            <label for="username">Username</label>
-                            <input type="text" id="username" name="username" value="{{ old('username') }}" placeholder="Enter your username" required>
-                            @error('username')
+                            <label for="login">Username or Email</label>
+                            <input type="text" id="login" name="login" value="{{ old('login') }}" placeholder="Enter your username or email" required>
+                            @error('login')
                                 <span style="color: #dc3545; font-size: 14px; margin-top: 5px; display: block;">{{ $message }}</span>
                             @enderror
                         </div>

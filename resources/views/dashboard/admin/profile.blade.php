@@ -3,11 +3,6 @@
 @section('title', 'Profile - Admin Dashboard')
 
 @section('content')
-    <div class="page-header">
-        <h1>My Profile</h1>
-        <p class="text-muted">Manage your account information and settings.</p>
-    </div>
-
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             <div class="alert-icon">

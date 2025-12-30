@@ -3,11 +3,6 @@
 @section('title', 'Websites Management - Admin Dashboard')
 
 @section('content')
-    <div class="page-header">
-        <h1>Websites Management</h1>
-        <p class="text-muted">Manage and approve publisher websites.</p>
-    </div>
-
     <!-- Statistics Cards -->
     <div class="stats-grid">
         <div class="stat-card">
@@ -32,38 +27,19 @@
         </div>
     </div>
 
-    <!-- Tabs -->
+    <!-- Website Statistics Chart -->
+    @if($dailyStats->count() > 0)
     <div class="card">
         <div class="card-header">
-            <ul class="nav nav-tabs card-header-tabs" role="tablist">
-                <li class="nav-item">
-                    <a class="nav-link {{ !request('status') || request('status') == 'all' ? 'active' : '' }}" href="{{ route('dashboard.admin.websites', ['status' => 'all']) }}">
-                        All ({{ $stats['total'] }})
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request('status') == 'pending' ? 'active' : '' }}" href="{{ route('dashboard.admin.websites', ['status' => 'pending']) }}">
-                        Pending ({{ $stats['pending'] }})
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request('status') == 'approved' ? 'active' : '' }}" href="{{ route('dashboard.admin.websites', ['status' => 'approved']) }}">
-                        Approved ({{ $stats['approved'] }})
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request('status') == 'rejected' ? 'active' : '' }}" href="{{ route('dashboard.admin.websites', ['status' => 'rejected']) }}">
-                        Rejected ({{ $stats['rejected'] }})
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request('status') == 'disabled' ? 'active' : '' }}" href="{{ route('dashboard.admin.websites', ['status' => 'disabled']) }}">
-                        Disabled ({{ $stats['disabled'] }})
-                    </a>
-                </li>
-            </ul>
+            <h3 class="card-title">Website Performance (Last 30 Days)</h3>
+        </div>
+        <div class="card-body">
+            <div style="position: relative; height: 400px;">
+                <canvas id="websiteStatsChart"></canvas>
+            </div>
         </div>
     </div>
+    @endif
 
     <!-- Filters -->
     <div class="card">
@@ -1106,5 +1082,106 @@
         showModal('suspendModal');
     }
 </script>
+
+@if(isset($dailyStats) && $dailyStats->count() > 0)
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    // Chart.js default configuration
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.font.size = 12;
+    Chart.defaults.color = '#6b7280';
+    Chart.defaults.borderColor = '#e5e7eb';
+    
+    // Website Statistics Chart
+    const websiteStatsCtx = document.getElementById('websiteStatsChart').getContext('2d');
+    new Chart(websiteStatsCtx, {
+        type: 'line',
+        data: {
+            labels: {!! json_encode($dailyStats->pluck('date')->map(function($date) {
+                return \Carbon\Carbon::parse($date)->format('M d');
+            })) !!},
+            datasets: [
+                {
+                    label: 'Impressions',
+                    data: {!! json_encode($dailyStats->pluck('impressions')) !!},
+                    borderColor: 'rgb(54, 162, 235)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'y',
+                },
+                {
+                    label: 'Clicks',
+                    data: {!! json_encode($dailyStats->pluck('clicks')) !!},
+                    borderColor: 'rgb(255, 99, 132)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'y',
+                },
+                {
+                    label: 'Revenue ($)',
+                    data: {!! json_encode($dailyStats->pluck('revenue')) !!},
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'y1',
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: false,
+                }
+            },
+            scales: {
+                x: {
+                    display: true,
+                    grid: {
+                        display: false,
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Impressions & Clicks'
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Revenue ($)'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                }
+            }
+        }
+    });
+</script>
+@endif
 @endpush
 

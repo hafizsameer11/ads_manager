@@ -3,11 +3,6 @@
 @section('title', 'Billing - Advertiser Dashboard')
 
 @section('content')
-    <div class="page-header">
-        <h1>Billing & Transactions</h1>
-        <p class="text-muted">Manage your account balance and view transaction history.</p>
-    </div>
-
     <!-- Summary Cards -->
     <div class="stats-grid">
         <div class="stat-card primary">
@@ -34,7 +29,7 @@
             <h3 class="card-title">Deposit Funds</h3>
         </div>
         <div class="card-body">
-            <form method="POST" action="{{ route('dashboard.advertiser.billing.store') }}">
+            <form method="POST" action="{{ route('dashboard.advertiser.billing.store') }}" enctype="multipart/form-data">
                 @csrf
                 <div class="row">
                     <div class="col-md-4">
@@ -48,24 +43,74 @@
                     <div class="col-md-4">
                         <div class="form-group">
                             <label for="payment_method">Payment Method</label>
-                            <select id="payment_method" name="payment_method" class="form-control" required>
+                            <select id="payment_method" name="payment_method" class="form-control" required onchange="toggleManualPaymentFields(); toggleStripeFields();">
                                 <option value="">Select Method</option>
-                                <option value="paypal">PayPal</option>
-                                <option value="coinpayment">CoinPayment</option>
-                                <option value="faucetpay">FaucetPay</option>
-                                <option value="stripe">Stripe</option>
-                                <option value="bank_swift">Bank SWIFT</option>
-                                <option value="wise">Wise</option>
+                                @if($paypalEnabled)
+                                    <option value="paypal">PayPal (Automatic)</option>
+                                @endif
+                                @if($coinpaymentsEnabled)
+                                    <option value="coinpayment">CoinPayments (Automatic)</option>
+                                @endif
+                                @if($stripeEnabled)
+                                    <option value="stripe">Stripe (Automatic)</option>
+                                @endif
+                                @if($faucetpayEnabled)
+                                    <option value="faucetpay">FaucetPay</option>
+                                @endif
+                                @if($bankSwiftEnabled)
+                                    <option value="bank_swift">Bank SWIFT</option>
+                                @endif
+                                @if($wiseEnabled)
+                                    <option value="wise">Wise</option>
+                                @endif
+                                @if($manualPaymentAccounts->count() > 0)
+                                    <option value="manual">Manual Payment</option>
+                                @endif
                             </select>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="form-group">
-                            <label for="transaction_id">Transaction ID (Optional)</label>
+                            <label for="transaction_id" id="transaction_id_label">Transaction ID <span id="transaction_id_required" style="display: none;" class="text-danger">*</span><span id="transaction_id_optional">(Optional)</span></label>
                             <input type="text" id="transaction_id" name="transaction_id" class="form-control" 
                                    placeholder="Payment reference">
                         </div>
                     </div>
+                </div>
+
+                <!-- Manual Payment Account Selection (shown only when manual is selected) -->
+                <div class="row" id="manual_payment_account_section" style="display: none;">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label for="manual_payment_account_id">Select Payment Account <span class="text-danger">*</span></label>
+                            <select id="manual_payment_account_id" name="manual_payment_account_id" class="form-control">
+                                <option value="">Select Account</option>
+                                @foreach($manualPaymentAccounts as $account)
+                                    <option value="{{ $account->id }}" data-account-number="{{ $account->account_number }}" data-account-type="{{ $account->account_type }}">
+                                        {{ $account->account_name }} ({{ $account->account_type }}) - {{ $account->account_number }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted">Select the payment account you used for this deposit</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Screenshot (shown only when manual is selected) -->
+                <div class="row" id="payment_screenshot_section" style="display: none;">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label for="payment_screenshot">Payment Screenshot <span class="text-danger">*</span></label>
+                            <input type="file" id="payment_screenshot" name="payment_screenshot" class="form-control" accept="image/*" onchange="previewScreenshot(this)">
+                            <small class="text-muted">Upload a screenshot of your payment confirmation. Max size: 5MB. Formats: JPEG, PNG, JPG, GIF, WEBP</small>
+                            <div id="screenshotPreview" class="mt-2" style="display: none;">
+                                <img id="previewImg" src="" alt="Screenshot Preview" style="max-width: 300px; border-radius: 6px; border: 1px solid #ddd;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
                     <div class="col-md-12">
                         <div class="form-group">
                             <label for="notes">Notes (Optional)</label>
@@ -79,6 +124,113 @@
                     </div>
                 </div>
             </form>
+
+            <script>
+                function toggleManualPaymentFields() {
+                    const paymentMethod = document.getElementById('payment_method').value;
+                    const manualSection = document.getElementById('manual_payment_account_section');
+                    const screenshotSection = document.getElementById('payment_screenshot_section');
+                    const transactionIdField = document.getElementById('transaction_id');
+                    const transactionIdLabel = document.getElementById('transaction_id_label');
+                    const transactionIdRequired = document.getElementById('transaction_id_required');
+                    const transactionIdOptional = document.getElementById('transaction_id_optional');
+                    const manualAccountSelect = document.getElementById('manual_payment_account_id');
+                    const screenshotInput = document.getElementById('payment_screenshot');
+
+                    if (paymentMethod === 'manual') {
+                        manualSection.style.display = 'block';
+                        screenshotSection.style.display = 'block';
+                        transactionIdField.required = true;
+                        transactionIdRequired.style.display = 'inline';
+                        transactionIdOptional.style.display = 'none';
+                        manualAccountSelect.required = true;
+                        screenshotInput.required = true;
+                    } else {
+                        manualSection.style.display = 'none';
+                        screenshotSection.style.display = 'none';
+                        transactionIdField.required = false;
+                        transactionIdRequired.style.display = 'none';
+                        transactionIdOptional.style.display = 'inline';
+                        manualAccountSelect.required = false;
+                        manualAccountSelect.value = '';
+                        screenshotInput.required = false;
+                        screenshotInput.value = '';
+                        document.getElementById('screenshotPreview').style.display = 'none';
+                    }
+                }
+
+                function toggleStripeFields() {
+                    const paymentMethod = document.getElementById('payment_method').value;
+                    const submitButton = document.querySelector('button[type="submit"]');
+                    const automaticGateways = ['stripe', 'paypal', 'coinpayment'];
+                    
+                    if (automaticGateways.includes(paymentMethod)) {
+                        // For automatic gateways, we'll redirect to checkout, so change button text
+                        if (submitButton) {
+                            let gatewayName = paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1);
+                            if (paymentMethod === 'coinpayment') {
+                                gatewayName = 'CoinPayments';
+                            }
+                            submitButton.innerHTML = '<i class="fas fa-credit-card"></i> Proceed to ' + gatewayName + ' Checkout';
+                        }
+                    } else {
+                        if (submitButton) {
+                            submitButton.innerHTML = '<i class="fas fa-credit-card"></i> Process Deposit';
+                        }
+                    }
+                }
+
+                function previewScreenshot(input) {
+                    const preview = document.getElementById('screenshotPreview');
+                    const previewImg = document.getElementById('previewImg');
+                    
+                    if (input.files && input.files[0]) {
+                        const reader = new FileReader();
+                        
+                        reader.onload = function(e) {
+                            previewImg.src = e.target.result;
+                            preview.style.display = 'block';
+                        }
+                        
+                        reader.readAsDataURL(input.files[0]);
+                    } else {
+                        preview.style.display = 'none';
+                    }
+                }
+
+                // Handle form submission for automatic payment gateways
+                document.querySelector('form').addEventListener('submit', function(e) {
+                    const paymentMethod = document.getElementById('payment_method').value;
+                    const automaticGateways = ['stripe', 'paypal', 'coinpayment'];
+                    
+                    if (automaticGateways.includes(paymentMethod)) {
+                        e.preventDefault();
+                        const amount = document.getElementById('amount').value;
+                        if (!amount || parseFloat(amount) < 10) {
+                            alert('Please enter a valid amount (minimum $10.00)');
+                            return;
+                        }
+                        
+                        // Redirect to appropriate checkout
+                        let checkoutUrl = '';
+                        if (paymentMethod === 'stripe') {
+                            checkoutUrl = '{{ route("dashboard.advertiser.stripe.checkout") }}?amount=' + amount;
+                        } else if (paymentMethod === 'paypal') {
+                            checkoutUrl = '{{ route("dashboard.advertiser.paypal.checkout") }}?amount=' + amount;
+                        } else if (paymentMethod === 'coinpayment') {
+                            checkoutUrl = '{{ route("dashboard.advertiser.coinpayments.checkout") }}?amount=' + amount;
+                        }
+                        
+                        if (checkoutUrl) {
+                            window.location.href = checkoutUrl;
+                        }
+                    }
+                });
+            </script>
+            
+            @if($stripeEnabled && $stripePublishableKey)
+                <script src="https://js.stripe.com/v3/"></script>
+            @endif
         </div>
     </div>
 

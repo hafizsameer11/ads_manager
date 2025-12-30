@@ -3,21 +3,13 @@
 @section('title', 'Analytics - Advertiser Dashboard')
 
 @section('content')
-    <div class="page-header">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h1>Campaign Analytics</h1>
-                <p class="text-muted">Detailed analytics and performance metrics for your campaigns.</p>
-            </div>
-            <div style="display: flex; gap: 10px;">
+    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px;">
                 <a href="{{ route('dashboard.advertiser.analytics.geo') }}" class="btn btn-primary">
                     <i class="fas fa-globe"></i> Geo Analytics
                 </a>
                 <a href="{{ route('dashboard.advertiser.analytics.device') }}" class="btn btn-primary">
                     <i class="fas fa-mobile-alt"></i> Device Analytics
                 </a>
-            </div>
-        </div>
     </div>
 
     <!-- Date Range Filter -->

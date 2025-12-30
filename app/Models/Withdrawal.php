@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class Withdrawal extends Model
 {
@@ -19,6 +20,12 @@ class Withdrawal extends Model
         'processed_at',
         'rejection_reason',
         'notes',
+        'manual_payment_account_id',
+        'account_type',
+        'account_name',
+        'account_number',
+        'payment_screenshot',
+        'transaction_id',
     ];
 
     protected $casts = [
@@ -33,6 +40,25 @@ class Withdrawal extends Model
     public function publisher(): BelongsTo
     {
         return $this->belongsTo(Publisher::class);
+    }
+
+    /**
+     * Get the manual payment account.
+     */
+    public function manualPaymentAccount(): BelongsTo
+    {
+        return $this->belongsTo(ManualPaymentAccount::class);
+    }
+
+    /**
+     * Get the payment screenshot URL.
+     */
+    public function getScreenshotUrlAttribute()
+    {
+        if ($this->payment_screenshot) {
+            return asset('storage/' . $this->payment_screenshot);
+        }
+        return null;
     }
 
     /**

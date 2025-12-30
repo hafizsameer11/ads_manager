@@ -17,6 +17,9 @@ use App\Http\Controllers\Dashboard\Admin\WebsitesController as AdminWebsitesCont
 use App\Http\Controllers\Dashboard\Admin\CampaignsController as AdminCampaignsController;
 use App\Http\Controllers\Dashboard\Admin\WithdrawalsController as AdminWithdrawalsController;
 use App\Http\Controllers\Dashboard\Admin\ReportsController;
+use App\Http\Controllers\Dashboard\Admin\ContactMessagesController;
+use App\Http\Controllers\Dashboard\Admin\ManualPaymentAccountsController;
+use App\Http\Controllers\Dashboard\Admin\AllowedAccountTypesController;
 use App\Http\Controllers\Dashboard\Admin\SettingsController;
 use App\Http\Controllers\Dashboard\Admin\ProfileController;
 use App\Http\Controllers\Dashboard\Advertiser\AdvertiserController as DashboardAdvertiserController;
@@ -33,6 +36,11 @@ use App\Http\Controllers\Dashboard\Publisher\StatisticsController;
 use App\Http\Controllers\Dashboard\Publisher\PaymentsController;
 use App\Http\Controllers\Dashboard\Publisher\ProfileController as PublisherProfileController;
 use Illuminate\Support\Facades\Route;
+
+// Webhook routes (no auth required)
+Route::post('/webhooks/stripe', [\App\Http\Controllers\Webhook\StripeWebhookController::class, 'handle'])->name('webhooks.stripe');
+Route::post('/webhooks/paypal', [\App\Http\Controllers\Webhook\PayPalWebhookController::class, 'handle'])->name('webhooks.paypal');
+Route::match(['get', 'post'], '/webhooks/coinpayments', [\App\Http\Controllers\Webhook\CoinPaymentsWebhookController::class, 'handle'])->name('webhooks.coinpayments');
 
 /*
 |--------------------------------------------------------------------------
@@ -132,6 +140,15 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'a
         Route::get('/reports', [ReportsController::class, 'index'])->name('reports');
         Route::get('/analytics/geo', [ReportsController::class, 'geo'])->name('analytics.geo');
         Route::get('/analytics/device', [ReportsController::class, 'device'])->name('analytics.device');
+        Route::get('/contact-messages', [ContactMessagesController::class, 'index'])->name('contact-messages');
+        Route::get('/contact-messages/{id}', [ContactMessagesController::class, 'show'])->name('contact-messages.show');
+        Route::post('/contact-messages/{id}/mark-read', [ContactMessagesController::class, 'markAsRead'])->name('contact-messages.mark-read');
+        Route::post('/contact-messages/{id}/mark-unread', [ContactMessagesController::class, 'markAsUnread'])->name('contact-messages.mark-unread');
+        Route::delete('/contact-messages/{id}', [ContactMessagesController::class, 'destroy'])->name('contact-messages.destroy');
+        Route::resource('manual-payment-accounts', ManualPaymentAccountsController::class);
+        Route::resource('allowed-account-types', AllowedAccountTypesController::class);
+        Route::post('allowed-account-types/{allowedAccountType}/toggle-status', [AllowedAccountTypesController::class, 'toggleStatus'])->name('allowed-account-types.toggle-status');
+        Route::post('/manual-payment-accounts/{id}/toggle-status', [ManualPaymentAccountsController::class, 'toggleStatus'])->name('manual-payment-accounts.toggle-status');
         Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
         Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');
         Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
@@ -153,6 +170,18 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'a
         Route::get('/analytics/device', [AnalyticsController::class, 'device'])->name('analytics.device');
         Route::get('/billing', [BillingController::class, 'index'])->name('billing');
         Route::post('/billing', [BillingController::class, 'store'])->name('billing.store');
+        // Stripe payment routes
+        Route::get('/stripe/checkout', [\App\Http\Controllers\Dashboard\Advertiser\StripeController::class, 'checkout'])->name('stripe.checkout');
+        Route::get('/stripe/success', [\App\Http\Controllers\Dashboard\Advertiser\StripeController::class, 'success'])->name('stripe.success');
+        Route::get('/stripe/cancel', [\App\Http\Controllers\Dashboard\Advertiser\StripeController::class, 'cancel'])->name('stripe.cancel');
+        // PayPal payment routes
+        Route::get('/paypal/checkout', [\App\Http\Controllers\Dashboard\Advertiser\PayPalController::class, 'checkout'])->name('paypal.checkout');
+        Route::get('/paypal/success', [\App\Http\Controllers\Dashboard\Advertiser\PayPalController::class, 'success'])->name('paypal.success');
+        Route::get('/paypal/cancel', [\App\Http\Controllers\Dashboard\Advertiser\PayPalController::class, 'cancel'])->name('paypal.cancel');
+        // CoinPayments payment routes
+        Route::get('/coinpayments/checkout', [\App\Http\Controllers\Dashboard\Advertiser\CoinPaymentsController::class, 'checkout'])->name('coinpayments.checkout');
+        Route::get('/coinpayments/success', [\App\Http\Controllers\Dashboard\Advertiser\CoinPaymentsController::class, 'success'])->name('coinpayments.success');
+        Route::get('/coinpayments/cancel', [\App\Http\Controllers\Dashboard\Advertiser\CoinPaymentsController::class, 'cancel'])->name('coinpayments.cancel');
         Route::get('/profile', [AdvertiserProfileController::class, 'index'])->name('profile');
         Route::post('/profile', [AdvertiserProfileController::class, 'update'])->name('profile.update');
     });
