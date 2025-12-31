@@ -664,6 +664,19 @@
                                             <button type="button" class="btn btn-sm btn-danger" title="Reject" onclick="showRejectModal({{ $deposit->id }}, '{{ number_format($deposit->amount, 2) }}')">
                                                 <i class="fas fa-times"></i> Reject
                                             </button>
+                                        @elseif($deposit->status === 'completed')
+                                            @if($deposit->invoice)
+                                                <a href="{{ route('dashboard.admin.invoices.show', $deposit->invoice->id) }}" class="btn btn-sm btn-info" title="View Invoice">
+                                                    <i class="fas fa-file-invoice"></i> Invoice
+                                                </a>
+                                            @else
+                                                <form action="{{ route('dashboard.admin.invoices.generate', $deposit->id) }}" method="POST" class="action-form" onsubmit="return confirm('Generate invoice for this deposit?');">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-sm btn-secondary" title="Generate Invoice">
+                                                        <i class="fas fa-file-invoice-dollar"></i> Generate
+                                                    </button>
+                                                </form>
+                                            @endif
                                         @else
                                             <span class="text-muted small">No actions</span>
                                         @endif

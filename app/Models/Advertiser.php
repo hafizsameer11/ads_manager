@@ -50,6 +50,6 @@ class Advertiser extends Model
      */
     public function canCreateCampaign(float $budget): bool
     {
-        return $this->balance >= $budget && $this->status === 'approved';
+        return $this->balance >= $budget && ($this->user->is_active ?? 0) === 1;
     }
 }

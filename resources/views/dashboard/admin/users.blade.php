@@ -364,9 +364,11 @@
                             <option value="">All Status</option>
                             <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved
                             </option>
+                            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                            <option value="suspended" {{ request('status') == 'suspended' ? 'selected' : '' }}>Suspended
+                            </option>
                             <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected
                             </option>
-                            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
                         </select>
                     </div>
                     <div class="filter-field filter-field-search">
@@ -445,6 +447,8 @@
                                         <span class="badge bg-success">Approved</span>
                                     @elseif ($status === 2)
                                         <span class="badge bg-warning text-dark">Pending</span>
+                                    @elseif ($status === 3)
+                                        <span class="badge bg-warning text-dark">Suspended</span>
                                     @elseif ($status === 0)
                                         <span class="badge bg-danger">Rejected</span>
                                     @else
@@ -459,11 +463,23 @@
                                 <td>
                                     <div class="action-buttons">
 
-                                        {{-- APPROVE / REJECT --}}
-                                        @if ($role === 'publisher' && optional($user->publisher)->status === 'pending')
+                                        {{-- VIEW / EDIT (for publishers and advertisers) --}}
+                                        @if ($role === 'publisher' || $role === 'advertiser')
+                                            <a href="{{ route('dashboard.admin.users.show', $user->id) }}" 
+                                               class="btn btn-sm btn-info" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ route('dashboard.admin.users.edit', $user->id) }}" 
+                                               class="btn btn-sm btn-primary" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        @endif
+
+                                        {{-- APPROVE / REJECT (for pending users) --}}
+                                        @if ($accountStatus == 2)
                                             <form method="POST"
                                                 action="{{ route('dashboard.admin.users.approve', $user->id) }}"
-                                                class="action-form" onsubmit="return confirm('Approve this publisher?');">
+                                                class="action-form" onsubmit="return confirm('Approve this user?');">
                                                 @csrf
                                                 <button class="btn btn-sm btn-success" title="Approve">
                                                     <i class="fas fa-check"></i>
@@ -472,7 +488,7 @@
 
                                             <form method="POST"
                                                 action="{{ route('dashboard.admin.users.reject', $user->id) }}"
-                                                class="action-form" onsubmit="return confirm('Reject this publisher?');">
+                                                class="action-form" onsubmit="return confirm('Reject this user?');">
                                                 @csrf
                                                 <button class="btn btn-sm btn-danger" title="Reject">
                                                     <i class="fas fa-times"></i>
@@ -480,48 +496,26 @@
                                             </form>
                                         @endif
 
-                                        @if ($role === 'advertiser' && optional($user->advertiser)->status === 'pending')
-                                            <form method="POST"
-                                                action="{{ route('dashboard.admin.users.approve', $user->id) }}"
-                                                class="action-form" onsubmit="return confirm('Approve this advertiser?');">
-                                                @csrf
-                                                <button class="btn btn-sm btn-success" title="Approve">
-                                                    <i class="fas fa-check"></i>
-                                                </button>
-                                            </form>
 
+                                        {{-- TOGGLE ACCOUNT STATUS (only show when not pending, since pending has dedicated approve/reject buttons) --}}
+                                        @if ($accountStatus != 2)
                                             <form method="POST"
-                                                action="{{ route('dashboard.admin.users.reject', $user->id) }}"
-                                                class="action-form" onsubmit="return confirm('Reject this advertiser?');">
+                                                action="{{ route('dashboard.admin.users.toggle-status', $user->id) }}"
+                                                class="action-form" onsubmit="return confirm('Are you sure?');">
                                                 @csrf
-                                                <button class="btn btn-sm btn-danger" title="Reject">
-                                                    <i class="fas fa-times"></i>
-                                                </button>
+                                                @if ($accountStatus == 1)
+                                                    {{-- Approved -> Reject --}}
+                                                    <button class="btn btn-sm btn-danger" title="Reject">
+                                                        <i class="fas fa-ban"></i>
+                                                    </button>
+                                                @elseif ($accountStatus == 0)
+                                                    {{-- Rejected -> Approve --}}
+                                                    <button class="btn btn-sm btn-success" title="Approve">
+                                                        <i class="fas fa-check-circle"></i>
+                                                    </button>
+                                                @endif
                                             </form>
                                         @endif
-
-                                        {{-- TOGGLE ACCOUNT STATUS --}}
-                                        <form method="POST"
-                                            action="{{ route('dashboard.admin.users.toggle-status', $user->id) }}"
-                                            class="action-form" onsubmit="return confirm('Are you sure?');">
-                                            @csrf
-                                            @if ($accountStatus == 2)
-                                                {{-- Pending -> Approve --}}
-                                                <button class="btn btn-sm btn-success" title="Approve">
-                                                    <i class="fas fa-check-circle"></i>
-                                                </button>
-                                            @elseif ($accountStatus == 1)
-                                                {{-- Approved -> Reject --}}
-                                                <button class="btn btn-sm btn-danger" title="Reject">
-                                                    <i class="fas fa-ban"></i>
-                                                </button>
-                                            @elseif ($accountStatus == 0)
-                                                {{-- Rejected -> Approve --}}
-                                                <button class="btn btn-sm btn-success" title="Approve">
-                                                    <i class="fas fa-check-circle"></i>
-                                                </button>
-                                            @endif
-                                        </form>
 
                                         {{-- DELETE --}}
                                         @if (!$user->isAdmin())

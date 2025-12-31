@@ -144,11 +144,13 @@ class WebsitesController extends Controller
         
         // Send notification to publisher
         if ($website->publisher && $website->publisher->user) {
-            $this->notificationService->create(
+            \App\Services\NotificationService::notifyUser(
                 $website->publisher->user,
                 'website_approved',
+                'general',
                 'Website Approved',
-                "Your website '{$website->domain}' has been approved!"
+                "Your website '{$website->domain}' has been approved!",
+                ['website_id' => $website->id]
             );
         }
 
@@ -183,11 +185,13 @@ class WebsitesController extends Controller
         
         // Send notification to publisher
         if ($website->publisher && $website->publisher->user) {
-            $this->notificationService->create(
+            \App\Services\NotificationService::notifyUser(
                 $website->publisher->user,
                 'website_rejected',
+                'general',
                 'Website Rejected',
-                "Your website '{$website->domain}' has been rejected. Reason: {$request->rejection_reason}"
+                "Your website '{$website->domain}' has been rejected. Reason: {$request->rejection_reason}",
+                ['website_id' => $website->id, 'rejection_reason' => $request->rejection_reason]
             );
         }
 
@@ -219,11 +223,13 @@ class WebsitesController extends Controller
         
         // Send notification to publisher
         if ($website->publisher && $website->publisher->user) {
-            $this->notificationService->create(
+            \App\Services\NotificationService::notifyUser(
                 $website->publisher->user,
                 'website_disabled',
+                'general',
                 'Website Disabled',
-                "Your website '{$website->domain}' has been disabled by admin."
+                "Your website '{$website->domain}' has been disabled by admin.",
+                ['website_id' => $website->id]
             );
         }
 
@@ -250,11 +256,13 @@ class WebsitesController extends Controller
         
         // Send notification to publisher
         if ($website->publisher && $website->publisher->user) {
-            $this->notificationService->create(
+            \App\Services\NotificationService::notifyUser(
                 $website->publisher->user,
                 'website_approved',
+                'general',
                 'Website Enabled',
-                "Your website '{$website->domain}' has been enabled and approved!"
+                "Your website '{$website->domain}' has been enabled and approved!",
+                ['website_id' => $website->id]
             );
         }
 
@@ -283,11 +291,13 @@ class WebsitesController extends Controller
         
         // Send notification to publisher
         if ($website->publisher && $website->publisher->user) {
-            $this->notificationService->create(
+            \App\Services\NotificationService::notifyUser(
                 $website->publisher->user,
                 'website_suspended',
+                'general',
                 'Website Suspended',
-                "Your website '{$website->domain}' has been suspended."
+                "Your website '{$website->domain}' has been suspended.",
+                ['website_id' => $website->id]
             );
         }
 

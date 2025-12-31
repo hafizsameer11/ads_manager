@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -101,24 +102,49 @@ class LoginController extends Controller
             // Check if user is approved (only is_active == 1 can login)
             if ($user->is_active != 1) {
                 Auth::logout();
+                $reason = '';
                 if ($user->is_active == 0) {
                     $message = 'Your account has been rejected. Please contact support.';
+                    $reason = 'Account rejected';
                 } elseif ($user->is_active == 2) {
                     $message = 'Your account is pending approval. Please wait for admin approval.';
+                    $reason = 'Account pending approval';
                 } else {
                     $message = 'Your account is not active. Please contact support.';
+                    $reason = 'Account not active';
                 }
+                // Log failed login attempt
+                ActivityLogService::logLoginAttempt($login, false, $reason);
                 return back()->withErrors([
                     'login' => $message,
                 ]);
             }
 
+            // Check if 2FA is required (admin/sub-admin with 2FA enabled)
+            if ($user->requiresTwoFactor() && $user->hasTwoFactorEnabled()) {
+                // Store user ID in session and redirect to 2FA verification
+                session()->put('login.id', $user->id);
+                session()->put('login.remember', $remember);
+                Auth::logout(); // Log out temporarily until 2FA is verified
+                
+                // Log successful password verification (but not full login yet)
+                ActivityLogService::logLoginAttempt($login, true);
+                
+                return redirect()->route('two-factor.verify');
+            }
+
             // Update last login
             $user->update(['last_login_at' => now()]);
+
+            // Log successful login
+            ActivityLogService::logLoginAttempt($login, true);
 
             // Redirect based on role
             return $this->redirectBasedOnRole($user);
         }
+
+        // Log failed login attempt
+        ActivityLogService::logLoginAttempt($login, false, 'Invalid credentials');
 
         throw ValidationException::withMessages([
             'login' => ['The provided credentials do not match our records.'],
@@ -133,7 +159,8 @@ class LoginController extends Controller
      */
     protected function redirectBasedOnRole($user)
     {
-        if ($user->isAdmin()) {
+        // Check if user has any admin permission
+        if ($user->hasAdminPermissions()) {
             return redirect()->intended(route('dashboard.admin.home'));
         } elseif ($user->isPublisher()) {
             return redirect()->intended(route('dashboard.publisher.home'));

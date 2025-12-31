@@ -152,13 +152,14 @@ class NotificationService
     }
 
     /**
-     * Notify advertiser about account approval/rejection.
+     * Notify advertiser about account approval/rejection/suspension.
      *
      * @param  User  $user
-     * @param  string  $status (approved, rejected)
+     * @param  string  $status (approved, rejected, suspended)
+     * @param  string|null  $reason
      * @return Notification
      */
-    public static function notifyAdvertiserApproval(User $user, string $status): Notification
+    public static function notifyAdvertiserApproval(User $user, string $status, ?string $reason = null): Notification
     {
         $statusMessages = [
             'approved' => [
@@ -167,7 +168,11 @@ class NotificationService
             ],
             'rejected' => [
                 'title' => 'Account Rejected',
-                'message' => "Your advertiser account has been rejected. Please contact support for more information.",
+                'message' => "Your advertiser account has been rejected. " . ($reason ? "Reason: {$reason}. " : "") . "Please contact support for more information.",
+            ],
+            'suspended' => [
+                'title' => 'Account Suspended',
+                'message' => "Your advertiser account has been suspended. " . ($reason ? "Reason: {$reason}. " : "") . "Please contact support for more information.",
             ],
         ];
 
@@ -184,6 +189,50 @@ class NotificationService
             $messageData['message'],
             [
                 'status' => $status,
+                'reason' => $reason,
+            ]
+        );
+    }
+
+    /**
+     * Notify publisher about account approval/rejection/suspension.
+     *
+     * @param  User  $user
+     * @param  string  $status (approved, rejected, suspended)
+     * @param  string|null  $reason
+     * @return Notification
+     */
+    public function notifyPublisherApproval(User $user, string $status, ?string $reason = null): Notification
+    {
+        $statusMessages = [
+            'approved' => [
+                'title' => 'Account Approved',
+                'message' => "Your publisher account has been approved. You can now add websites and start earning.",
+            ],
+            'rejected' => [
+                'title' => 'Account Rejected',
+                'message' => "Your publisher account has been rejected. " . ($reason ? "Reason: {$reason}. " : "") . "Please contact support for more information.",
+            ],
+            'suspended' => [
+                'title' => 'Account Suspended',
+                'message' => "Your publisher account has been suspended. " . ($reason ? "Reason: {$reason}. " : "") . "Please contact support for more information.",
+            ],
+        ];
+
+        $messageData = $statusMessages[$status] ?? [
+            'title' => 'Account Update',
+            'message' => "Your publisher account status has been updated.",
+        ];
+
+        return self::notifyUser(
+            $user,
+            'publisher_' . $status,
+            'user',
+            $messageData['title'],
+            $messageData['message'],
+            [
+                'status' => $status,
+                'reason' => $reason,
             ]
         );
     }

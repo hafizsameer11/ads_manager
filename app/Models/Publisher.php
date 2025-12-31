@@ -72,6 +72,6 @@ class Publisher extends Model
      */
     public function canWithdraw(): bool
     {
-        return $this->balance >= $this->minimum_payout && $this->status === 'approved';
+        return $this->balance >= $this->minimum_payout && ($this->user->is_active ?? 0) === 1;
     }
 }

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Storage;
 
 class Transaction extends Model
@@ -37,6 +38,14 @@ class Transaction extends Model
     public function transactionable(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    /**
+     * Get the invoice for this transaction.
+     */
+    public function invoice(): HasOne
+    {
+        return $this->hasOne(Invoice::class, 'transaction_id');
     }
 
     /**

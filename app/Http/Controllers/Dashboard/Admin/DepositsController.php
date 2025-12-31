@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Dashboard\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Transaction;
 use App\Models\Advertiser;
+use App\Models\Invoice;
 use App\Models\Notification;
+use App\Models\Setting;
 use App\Services\NotificationService;
+use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -41,7 +44,7 @@ class DepositsController extends Controller
         }
         
         $query = Transaction::where('type', 'deposit')
-            ->with('transactionable.user');
+            ->with(['transactionable.user', 'invoice']);
         
         // Filter by status
         if ($request->filled('status')) {
@@ -108,18 +111,24 @@ class DepositsController extends Controller
                     $transaction->update(['notes' => $request->notes]);
                 }
                 
+                // Generate invoice automatically
+                $this->generateInvoiceForTransaction($transaction, $advertiser);
+                
                 // Send notification to advertiser
                 \App\Services\NotificationService::notifyUser(
                     $advertiser->user,
                     'deposit_approved',
                     'payment',
                     'Deposit Approved',
-                    "Your deposit of $" . number_format($transaction->amount, 2) . " has been approved and added to your balance.",
+                    "Your deposit of $" . number_format($transaction->amount, 2) . " has been approved and added to your balance. An invoice has been generated.",
                     ['transaction_id' => $transaction->id, 'amount' => $transaction->amount]
                 );
+                
+                // Log activity
+                ActivityLogService::logDepositApproved($transaction, Auth::user());
             }
             
-            return back()->with('success', 'Deposit approved successfully.');
+            return back()->with('success', 'Deposit approved successfully. Invoice generated.');
         });
     }
 
@@ -153,6 +162,9 @@ class DepositsController extends Controller
                     "Your deposit of $" . number_format($transaction->amount, 2) . " has been rejected. Reason: " . $request->rejection_reason,
                     ['transaction_id' => $transaction->id, 'amount' => $transaction->amount, 'reason' => $request->rejection_reason]
                 );
+                
+                // Log activity
+                ActivityLogService::logDepositRejected($transaction, Auth::user(), $request->rejection_reason);
             }
             
             return back()->with('success', 'Deposit rejected successfully.');
@@ -309,6 +321,68 @@ class DepositsController extends Controller
                 ->header('Content-Type', 'text/html')
                 ->header('Content-Disposition', 'inline; filename="deposits_' . date('Y-m-d_His') . '.html"');
         }
+    }
+
+    /**
+     * Generate invoice for a completed transaction.
+     */
+    private function generateInvoiceForTransaction(Transaction $transaction, Advertiser $advertiser)
+    {
+        // Check if invoice already exists
+        if (Invoice::where('transaction_id', $transaction->id)->exists()) {
+            return;
+        }
+        
+        $user = $advertiser->user;
+        
+        // Get company info from settings
+        $companyName = Setting::get('company_name', config('app.name'));
+        $companyAddress = Setting::get('company_address', '');
+        $companyPhone = Setting::get('company_phone', '');
+        $companyEmail = Setting::get('company_email', config('mail.from.address'));
+        $taxRate = Setting::get('tax_rate', 0);
+        
+        // Calculate tax if applicable
+        $taxAmount = ($transaction->amount * $taxRate) / 100;
+        $totalAmount = $transaction->amount + $taxAmount;
+        
+        // Create invoice
+        Invoice::create([
+            'invoiceable_type' => Advertiser::class,
+            'invoiceable_id' => $advertiser->id,
+            'transaction_id' => $transaction->id,
+            'type' => 'deposit',
+            'amount' => $transaction->amount,
+            'tax_amount' => $taxAmount,
+            'total_amount' => $totalAmount,
+            'status' => 'sent', // Auto-mark as sent when generated
+            'invoice_date' => now(),
+            'due_date' => now()->addDays(30), // 30 days payment terms
+            'invoice_data' => [
+                'company' => [
+                    'name' => $companyName,
+                    'address' => $companyAddress,
+                    'phone' => $companyPhone,
+                    'email' => $companyEmail,
+                ],
+                'client' => [
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                ],
+                'items' => [
+                    [
+                        'description' => 'Account Deposit',
+                        'quantity' => 1,
+                        'unit_price' => $transaction->amount,
+                        'total' => $transaction->amount,
+                    ],
+                ],
+                'payment_method' => $transaction->payment_method,
+                'transaction_id' => $transaction->transaction_id,
+            ],
+            'notes' => $transaction->notes,
+        ]);
     }
 
     /**

@@ -52,6 +52,12 @@
                         @endif
                     </a>
                 </li>
+                <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.ad-units') ? 'active' : '' }}">
+                    <a href="{{ route('dashboard.admin.ad-units') }}" class="nav-link">
+                        <i class="fas fa-ad"></i>
+                        <span>Ad Units</span>
+                    </a>
+                </li>
                 <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.campaigns') ? 'active' : '' }}">
                     <a href="{{ route('dashboard.admin.campaigns') }}" class="nav-link">
                         <i class="fas fa-bullhorn"></i>
@@ -77,6 +83,18 @@
                         @if(isset($withdrawalNotifications) && $withdrawalNotifications > 0)
                             <span class="sidebar-badge">New</span>
                         @endif
+                    </a>
+                </li>
+                <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.invoices') ? 'active' : '' }}">
+                    <a href="{{ route('dashboard.admin.invoices') }}" class="nav-link">
+                        <i class="fas fa-file-invoice"></i>
+                        <span>Invoices</span>
+                    </a>
+                </li>
+                <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.activity-logs') ? 'active' : '' }}">
+                    <a href="{{ route('dashboard.admin.activity-logs') }}" class="nav-link">
+                        <i class="fas fa-history"></i>
+                        <span>Activity Logs</span>
                     </a>
                 </li>
                 <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.reports') ? 'active' : '' }}">
@@ -112,6 +130,46 @@
                         <span>Notifications</span>
                     </a>
                 </li>
+                <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.roles') ? 'active' : '' }}">
+                    <a href="{{ route('dashboard.admin.roles.index') }}" class="nav-link">
+                        <i class="fas fa-user-shield"></i>
+                        <span>Roles & Permissions</span>
+                    </a>
+                </li>
+                <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.security') ? 'active' : '' }}">
+                    <a href="{{ route('dashboard.admin.security.two-factor') }}" class="nav-link">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Security (2FA)</span>
+                    </a>
+                </li>
+                @if(Auth::check() && Auth::user()->hasPermission('manage_settings'))
+                <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.announcements') ? 'active' : '' }}">
+                    <a href="{{ route('dashboard.admin.announcements.index') }}" class="nav-link">
+                        <i class="fas fa-bullhorn"></i>
+                        <span>Announcements</span>
+                    </a>
+                </li>
+                <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.email-templates') ? 'active' : '' }}">
+                    <a href="{{ route('dashboard.admin.email-templates.index') }}" class="nav-link">
+                        <i class="fas fa-envelope-open-text"></i>
+                        <span>Email Templates</span>
+                    </a>
+                </li>
+                <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.pages') ? 'active' : '' }}">
+                    <a href="{{ route('dashboard.admin.pages.index') }}" class="nav-link">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Pages</span>
+                    </a>
+                </li>
+                @endif
+                @if(Auth::check() && Auth::user()->hasAnyPermission(['manage_users', 'manage_settings', 'view_activity_logs']))
+                <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.support-tickets') ? 'active' : '' }}">
+                    <a href="{{ route('dashboard.admin.support-tickets.index') }}" class="nav-link">
+                        <i class="fas fa-ticket-alt"></i>
+                        <span>Support Tickets</span>
+                    </a>
+                </li>
+                @endif
                 <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.settings') ? 'active' : '' }}">
                     <a href="{{ route('dashboard.admin.settings') }}" class="nav-link">
                         <i class="fas fa-cog"></i>
@@ -149,6 +207,12 @@
                         <span>Billing</span>
                     </a>
                 </li>
+                <li class="nav-item {{ str_contains($currentRoute, 'dashboard.advertiser.support-tickets') ? 'active' : '' }}">
+                    <a href="{{ route('dashboard.advertiser.support-tickets.index') }}" class="nav-link">
+                        <i class="fas fa-ticket-alt"></i>
+                        <span>Support Tickets</span>
+                    </a>
+                </li>
             @elseif($userRole === 'publisher')
                 <li class="nav-item {{ str_contains($currentRoute, 'dashboard.publisher.home') ? 'active' : '' }}">
                     <a href="{{ route('dashboard.publisher.home') }}" class="nav-link">
@@ -178,6 +242,12 @@
                     <a href="{{ route('dashboard.publisher.payments') }}" class="nav-link">
                         <i class="fas fa-money-bill-wave"></i>
                         <span>Payments</span>
+                    </a>
+                </li>
+                <li class="nav-item {{ str_contains($currentRoute, 'dashboard.publisher.support-tickets') ? 'active' : '' }}">
+                    <a href="{{ route('dashboard.publisher.support-tickets.index') }}" class="nav-link">
+                        <i class="fas fa-ticket-alt"></i>
+                        <span>Support Tickets</span>
                     </a>
                 </li>
             @endif

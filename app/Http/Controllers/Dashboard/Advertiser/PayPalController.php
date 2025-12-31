@@ -42,7 +42,7 @@ class PayPalController extends Controller
                 ->withErrors(['error' => 'Advertiser profile not found.']);
         }
 
-        if ($advertiser->status !== 'approved') {
+        if ($user->is_active !== 1) {
             return redirect()->route('dashboard.advertiser.billing')
                 ->withErrors(['error' => 'Your account must be approved to make deposits.']);
         }

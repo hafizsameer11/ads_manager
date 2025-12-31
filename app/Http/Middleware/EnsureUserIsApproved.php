@@ -21,23 +21,15 @@ class EnsureUserIsApproved
 
         $user = auth()->user();
 
-        // Admin doesn't need approval
-        if ($user->isAdmin()) {
+        // Users with admin permissions don't need approval
+        if ($user->hasAdminPermissions()) {
             return $next($request);
         }
 
-        // Check publisher approval
-        if ($user->isPublisher()) {
-            if (!$user->publisher || $user->publisher->status !== 'approved') {
-                return redirect()->route('pending-approval');
-            }
-        }
-
-        // Check advertiser approval
-        if ($user->isAdvertiser()) {
-            if (!$user->advertiser || $user->advertiser->status !== 'approved') {
-                return redirect()->route('pending-approval');
-            }
+        // Check account status - only allow approved users (is_active == 1)
+        // 0 = rejected, 1 = approved, 2 = pending, 3 = suspended
+        if ($user->is_active != 1) {
+            return redirect()->route('pending-approval');
         }
 
         return $next($request);

@@ -617,4 +617,57 @@
             </form>
         </div>
     </div>
+
+    <!-- Referral / Affiliate Program Settings -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Referral / Affiliate Program Settings</h3>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ route('dashboard.admin.settings.update') }}">
+                @csrf
+                <input type="hidden" name="section" value="referral">
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="referral_commission_rate">Referral Commission Rate (%) <span class="text-danger">*</span></label>
+                            <input type="number" id="referral_commission_rate" name="referral_commission_rate" class="form-control" 
+                                   value="{{ $settings['referral_commission_rate'] }}" min="0" max="100" step="0.01" required>
+                            <small class="text-muted">
+                                Percentage of publisher earnings that the referrer receives as commission. 
+                                For example, if set to 5%, and a referred publisher earns $100, the referrer gets $5.
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="referral_deposit_bonus_rate">Referral Deposit Bonus Rate (%) <span class="text-danger">*</span></label>
+                            <input type="number" id="referral_deposit_bonus_rate" name="referral_deposit_bonus_rate" class="form-control" 
+                                   value="{{ $settings['referral_deposit_bonus_rate'] }}" min="0" max="100" step="0.01" required>
+                            <small class="text-muted">
+                                Percentage of advertiser deposits that the referrer receives as a bonus. 
+                                For example, if set to 5%, and a referred advertiser deposits $1000, the referrer gets $50.
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="alert alert-info">
+                            <strong><i class="fas fa-info-circle"></i> How Referral Program Works:</strong>
+                            <ul style="margin-bottom: 0; padding-left: 20px; margin-top: 10px;">
+                                <li><strong>Publisher Referrals:</strong> When a publisher signs up using a referral link, the referrer earns a commission on all future earnings of the referred publisher.</li>
+                                <li><strong>Advertiser Referrals:</strong> When an advertiser signs up using a referral link and makes a deposit, the referrer earns a one-time bonus based on the deposit amount.</li>
+                                <li><strong>Earnings:</strong> All referral earnings are credited to the referrer's publisher balance (if they are a publisher).</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Referral Settings
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 @endsection

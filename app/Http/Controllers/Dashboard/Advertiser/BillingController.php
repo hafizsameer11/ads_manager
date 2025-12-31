@@ -178,7 +178,7 @@ class BillingController extends Controller
             return back()->withErrors(['error' => 'Advertiser profile not found.']);
         }
 
-        if ($advertiser->status !== 'approved') {
+        if ($user->is_active !== 1) {
             return back()->withErrors(['error' => 'Your account must be approved to make deposits.']);
         }
 

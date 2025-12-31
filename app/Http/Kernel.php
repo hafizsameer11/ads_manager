@@ -67,5 +67,6 @@ class Kernel extends HttpKernel
         'role' => \App\Http\Middleware\EnsureUserRole::class,
         'active' => \App\Http\Middleware\EnsureUserIsActive::class,
         'approved' => \App\Http\Middleware\EnsureUserIsApproved::class,
+        'permission' => \App\Http\Middleware\CheckPermission::class,
     ];
 }

@@ -24,7 +24,7 @@ class RedirectIfAuthenticated
                 $user = Auth::guard($guard)->user();
                 
                 // Redirect authenticated users to their appropriate dashboard
-                if ($user->isAdmin()) {
+                if ($user->hasAdminPermissions()) {
                     return redirect()->route('dashboard.admin.home');
                 } elseif ($user->isPublisher()) {
                     return redirect()->route('dashboard.publisher.home');

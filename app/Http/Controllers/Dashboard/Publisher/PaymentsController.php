@@ -25,6 +25,9 @@ class PaymentsController extends Controller
             return redirect()->route('dashboard.publisher.home')->with('error', 'Publisher profile not found.');
         }
         
+        // Load user relationship to ensure is_active is available
+        $publisher->load('user');
+        
         // Withdrawals
         $query = Withdrawal::where('publisher_id', $publisher->id);
         
@@ -48,7 +51,7 @@ class PaymentsController extends Controller
             'pending_balance' => $publisher->pending_balance ?? 0,
             'minimum_payout' => $minimumPayout,
             'maximum_payout' => $maximumPayout,
-            'can_withdraw' => ($publisher->balance ?? 0) >= $minimumPayout && ($publisher->status ?? '') === 'approved',
+            'can_withdraw' => ($publisher->balance ?? 0) >= $minimumPayout && ($user->is_active ?? 0) === 1,
             'total_withdrawn' => Withdrawal::where('publisher_id', $publisher->id)
                 ->where('status', 'completed')
                 ->sum('amount'),
@@ -87,7 +90,7 @@ class PaymentsController extends Controller
             return back()->withErrors(['error' => 'Publisher profile not found.']);
         }
 
-        if ($publisher->status !== 'approved') {
+        if ($user->is_active !== 1) {
             return back()->withErrors(['error' => 'Your account must be approved to make withdrawals.']);
         }
 

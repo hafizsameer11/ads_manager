@@ -25,7 +25,7 @@ class CreateCampaignController extends Controller
             return redirect()->route('dashboard.advertiser.home')->with('error', 'Advertiser profile not found.');
         }
         
-        if ($advertiser->status !== 'approved') {
+        if ($user->is_active !== 1) {
             return redirect()->route('dashboard.advertiser.home')
                 ->with('error', 'Your account needs to be approved before creating campaigns.');
         }
@@ -71,7 +71,7 @@ class CreateCampaignController extends Controller
             return back()->withErrors(['error' => 'Advertiser profile not found.']);
         }
 
-        if ($advertiser->status !== 'approved') {
+        if ($user->is_active !== 1) {
             return back()->withErrors(['error' => 'Your account must be approved to create campaigns.']);
         }
 

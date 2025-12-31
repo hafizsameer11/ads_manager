@@ -138,30 +138,14 @@
                         <div>
                             @if($user->is_active == 1)
                                 <span class="badge badge-success">Approved</span>
-                            @elseif($user->is_active == 0)
-                                <span class="badge badge-danger">Rejected</span>
                             @elseif($user->is_active == 2)
                                 <span class="badge badge-warning">Pending</span>
+                            @elseif($user->is_active == 3)
+                                <span class="badge badge-warning">Suspended</span>
+                            @elseif($user->is_active == 0)
+                                <span class="badge badge-danger">Rejected</span>
                             @else
                                 <span class="badge badge-secondary">Unknown</span>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label>Publisher Status</label>
-                        <div>
-                            @if($publisher)
-                                @if($publisher->status === 'approved')
-                                    <span class="badge badge-success">Approved</span>
-                                @elseif($publisher->status === 'pending')
-                                    <span class="badge badge-warning">Pending</span>
-                                @else
-                                    <span class="badge badge-danger">Rejected</span>
-                                @endif
-                            @else
-                                <span class="badge badge-secondary">N/A</span>
                             @endif
                         </div>
                     </div>

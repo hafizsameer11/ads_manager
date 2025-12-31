@@ -83,6 +83,9 @@ Route::prefix('')->name('website.')->group(function () {
     // Report DMCA Page
     Route::get('/report-dmca', [ReportDmcaController::class, 'index'])->name('report-dmca');
     Route::post('/report-dmca', [ReportDmcaController::class, 'store'])->name('report-dmca.store');
+    
+    // Dynamic pages (Terms, Privacy Policy, etc.)
+    Route::get('/page/{slug}', [\App\Http\Controllers\Website\PageController::class, 'show'])->name('page.show');
 });
 
 // Authentication Routes (only for guests)
@@ -91,6 +94,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
     Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
     Route::post('/register', [RegisterController::class, 'register'])->name('register.submit');
+    
+    // Two-Factor Authentication Routes
+    Route::get('/two-factor/verify', [\App\Http\Controllers\Auth\TwoFactorVerificationController::class, 'show'])->name('two-factor.verify');
+    Route::post('/two-factor/verify', [\App\Http\Controllers\Auth\TwoFactorVerificationController::class, 'verify'])->name('two-factor.verify.submit');
     
     // Password Reset Routes
     Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
@@ -109,72 +116,166 @@ Route::middleware('auth')->get('/pending-approval', [\App\Http\Controllers\Auth\
 
 // Dashboard Routes (requires authentication, active status, and approval)
 Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'approved'])->group(function () {
-    // Admin Dashboard Routes (only for admin role)
-    Route::prefix('admin')->name('admin.')->middleware('role:admin')->group(function () {
+    // Admin Dashboard Routes (permission-based access)
+    Route::prefix('admin')->name('admin.')->group(function () {
+        // Dashboard home - accessible to anyone with any admin permission
         Route::get('/', [AdminController::class, 'index'])->name('index');
         Route::get('/home', [AdminController::class, 'index'])->name('home');
-        Route::get('/users', [UsersController::class, 'index'])->name('users');
-        Route::post('/users/{id}/approve', [UsersController::class, 'approve'])->name('users.approve');
-        Route::post('/users/{id}/reject', [UsersController::class, 'reject'])->name('users.reject');
-        Route::post('/users/{id}/toggle-status', [UsersController::class, 'toggleStatus'])->name('users.toggle-status');
-        Route::delete('/users/{id}', [UsersController::class, 'destroy'])->name('users.destroy');
-        Route::get('/websites', [AdminWebsitesController::class, 'index'])->name('websites');
-        Route::get('/websites/{id}', [AdminWebsitesController::class, 'show'])->name('websites.show');
-        Route::post('/websites/{id}/approve', [AdminWebsitesController::class, 'approve'])->name('websites.approve');
-        Route::post('/websites/{id}/reject', [AdminWebsitesController::class, 'reject'])->name('websites.reject');
-        Route::post('/websites/{id}/disable', [AdminWebsitesController::class, 'disable'])->name('websites.disable');
-        Route::post('/websites/{id}/enable', [AdminWebsitesController::class, 'enable'])->name('websites.enable');
-        Route::post('/websites/{id}/suspend', [AdminWebsitesController::class, 'suspend'])->name('websites.suspend');
-        Route::get('/campaigns', [AdminCampaignsController::class, 'index'])->name('campaigns');
-        Route::get('/campaigns/{id}', [AdminCampaignsController::class, 'show'])->name('campaigns.show');
-        Route::get('/deposits', [\App\Http\Controllers\Dashboard\Admin\DepositsController::class, 'index'])->name('deposits');
-        Route::post('/deposits/{id}/approve', [\App\Http\Controllers\Dashboard\Admin\DepositsController::class, 'approve'])->name('deposits.approve');
-        Route::post('/deposits/{id}/reject', [\App\Http\Controllers\Dashboard\Admin\DepositsController::class, 'reject'])->name('deposits.reject');
-        Route::get('/deposits/export/csv', [\App\Http\Controllers\Dashboard\Admin\DepositsController::class, 'exportCsv'])->name('deposits.export.csv');
-        Route::get('/deposits/export/excel', [\App\Http\Controllers\Dashboard\Admin\DepositsController::class, 'exportExcel'])->name('deposits.export.excel');
-        Route::get('/deposits/export/pdf', [\App\Http\Controllers\Dashboard\Admin\DepositsController::class, 'exportPdf'])->name('deposits.export.pdf');
-        Route::get('/withdrawals', [AdminWithdrawalsController::class, 'index'])->name('withdrawals');
-        Route::post('/withdrawals/{id}/approve', [AdminWithdrawalsController::class, 'approve'])->name('withdrawals.approve');
-        Route::post('/withdrawals/{id}/reject', [AdminWithdrawalsController::class, 'reject'])->name('withdrawals.reject');
-        Route::post('/withdrawals/{id}/mark-paid', [AdminWithdrawalsController::class, 'markPaid'])->name('withdrawals.mark-paid');
-        Route::get('/withdrawals/export/csv', [AdminWithdrawalsController::class, 'exportCsv'])->name('withdrawals.export.csv');
-        Route::get('/withdrawals/export/excel', [AdminWithdrawalsController::class, 'exportExcel'])->name('withdrawals.export.excel');
-        Route::get('/withdrawals/export/pdf', [AdminWithdrawalsController::class, 'exportPdf'])->name('withdrawals.export.pdf');
-        Route::post('/campaigns/{id}/approve', [AdminCampaignsController::class, 'approve'])->name('campaigns.approve');
-        Route::post('/campaigns/{id}/reject', [AdminCampaignsController::class, 'reject'])->name('campaigns.reject');
-        Route::post('/campaigns/{id}/pause', [AdminCampaignsController::class, 'pause'])->name('campaigns.pause');
-        Route::post('/campaigns/{id}/resume', [AdminCampaignsController::class, 'resume'])->name('campaigns.resume');
-        Route::delete('/campaigns/{id}', [AdminCampaignsController::class, 'destroy'])->name('campaigns.destroy');
+        
+        // User management routes
+        Route::middleware('permission:manage_users')->group(function () {
+            Route::get('/users', [UsersController::class, 'index'])->name('users');
+            Route::get('/users/{id}', [UsersController::class, 'show'])->name('users.show');
+            Route::get('/users/{id}/edit', [UsersController::class, 'edit'])->name('users.edit');
+            Route::put('/users/{id}', [UsersController::class, 'update'])->name('users.update');
+            Route::delete('/users/{id}', [UsersController::class, 'destroy'])->name('users.destroy');
+            Route::get('/users/{id}/referrals', [UsersController::class, 'referrals'])->name('users.referrals');
+        });
+        
+        // User approval/status routes
+        Route::middleware('permission:approve_users')->group(function () {
+            Route::post('/users/{id}/approve', [UsersController::class, 'approve'])->name('users.approve');
+            Route::post('/users/{id}/reject', [UsersController::class, 'reject'])->name('users.reject');
+            Route::post('/users/{id}/suspend', [UsersController::class, 'suspend'])->name('users.suspend');
+            Route::post('/users/{id}/block', [UsersController::class, 'block'])->name('users.block');
+            Route::post('/users/{id}/toggle-status', [UsersController::class, 'toggleStatus'])->name('users.toggle-status');
+        });
+        
+        // Website management routes
+        Route::middleware('permission:manage_websites')->group(function () {
+            Route::get('/websites', [AdminWebsitesController::class, 'index'])->name('websites');
+            Route::get('/websites/{id}', [AdminWebsitesController::class, 'show'])->name('websites.show');
+            Route::post('/websites/{id}/approve', [AdminWebsitesController::class, 'approve'])->name('websites.approve');
+            Route::post('/websites/{id}/reject', [AdminWebsitesController::class, 'reject'])->name('websites.reject');
+            Route::post('/websites/{id}/disable', [AdminWebsitesController::class, 'disable'])->name('websites.disable');
+            Route::post('/websites/{id}/enable', [AdminWebsitesController::class, 'enable'])->name('websites.enable');
+            Route::post('/websites/{id}/suspend', [AdminWebsitesController::class, 'suspend'])->name('websites.suspend');
+        });
+        
+        // Ad units management routes
+        Route::middleware('permission:manage_ad_units')->group(function () {
+            Route::get('/ad-units', [\App\Http\Controllers\Dashboard\Admin\AdUnitsController::class, 'index'])->name('ad-units');
+            Route::get('/ad-units/create', [\App\Http\Controllers\Dashboard\Admin\AdUnitsController::class, 'create'])->name('ad-units.create');
+            Route::post('/ad-units', [\App\Http\Controllers\Dashboard\Admin\AdUnitsController::class, 'store'])->name('ad-units.store');
+            Route::get('/ad-units/{id}', [\App\Http\Controllers\Dashboard\Admin\AdUnitsController::class, 'show'])->name('ad-units.show');
+            Route::get('/ad-units/{id}/edit', [\App\Http\Controllers\Dashboard\Admin\AdUnitsController::class, 'edit'])->name('ad-units.edit');
+            Route::put('/ad-units/{id}', [\App\Http\Controllers\Dashboard\Admin\AdUnitsController::class, 'update'])->name('ad-units.update');
+            Route::delete('/ad-units/{id}', [\App\Http\Controllers\Dashboard\Admin\AdUnitsController::class, 'destroy'])->name('ad-units.destroy');
+        });
+        
+        // Activity logs routes
+        Route::middleware('permission:view_activity_logs')->group(function () {
+            Route::get('/activity-logs', [\App\Http\Controllers\Dashboard\Admin\ActivityLogsController::class, 'index'])->name('activity-logs');
+            Route::get('/activity-logs/{id}', [\App\Http\Controllers\Dashboard\Admin\ActivityLogsController::class, 'show'])->name('activity-logs.show');
+        });
+        
+        // Roles & permissions routes
+        Route::middleware('permission:manage_roles')->group(function () {
+            Route::resource('roles', \App\Http\Controllers\Dashboard\Admin\RolesController::class);
+            Route::post('/users/{user}/assign-role', [\App\Http\Controllers\Dashboard\Admin\RolesController::class, 'assignRole'])->name('users.assign-role');
+            Route::delete('/users/{user}/remove-role/{role}', [\App\Http\Controllers\Dashboard\Admin\RolesController::class, 'removeRole'])->name('users.remove-role');
+        });
+        
+        // Campaign management routes
+        Route::middleware('permission:manage_campaigns')->group(function () {
+            Route::get('/campaigns', [AdminCampaignsController::class, 'index'])->name('campaigns');
+            Route::get('/campaigns/{id}', [AdminCampaignsController::class, 'show'])->name('campaigns.show');
+            Route::post('/campaigns/{id}/approve', [AdminCampaignsController::class, 'approve'])->name('campaigns.approve');
+            Route::post('/campaigns/{id}/reject', [AdminCampaignsController::class, 'reject'])->name('campaigns.reject');
+            Route::post('/campaigns/{id}/pause', [AdminCampaignsController::class, 'pause'])->name('campaigns.pause');
+            Route::post('/campaigns/{id}/resume', [AdminCampaignsController::class, 'resume'])->name('campaigns.resume');
+            Route::delete('/campaigns/{id}', [AdminCampaignsController::class, 'destroy'])->name('campaigns.destroy');
+        });
+        
+        // Deposit management routes
+        Route::middleware('permission:manage_deposits')->group(function () {
+            Route::get('/deposits', [\App\Http\Controllers\Dashboard\Admin\DepositsController::class, 'index'])->name('deposits');
+            Route::post('/deposits/{id}/approve', [\App\Http\Controllers\Dashboard\Admin\DepositsController::class, 'approve'])->name('deposits.approve');
+            Route::post('/deposits/{id}/reject', [\App\Http\Controllers\Dashboard\Admin\DepositsController::class, 'reject'])->name('deposits.reject');
+            Route::get('/deposits/export/csv', [\App\Http\Controllers\Dashboard\Admin\DepositsController::class, 'exportCsv'])->name('deposits.export.csv');
+            Route::get('/deposits/export/excel', [\App\Http\Controllers\Dashboard\Admin\DepositsController::class, 'exportExcel'])->name('deposits.export.excel');
+            Route::get('/deposits/export/pdf', [\App\Http\Controllers\Dashboard\Admin\DepositsController::class, 'exportPdf'])->name('deposits.export.pdf');
+            Route::get('/invoices', [\App\Http\Controllers\Dashboard\Admin\InvoicesController::class, 'index'])->name('invoices');
+            Route::get('/invoices/{id}', [\App\Http\Controllers\Dashboard\Admin\InvoicesController::class, 'show'])->name('invoices.show');
+            Route::post('/invoices/generate/{transactionId}', [\App\Http\Controllers\Dashboard\Admin\InvoicesController::class, 'generate'])->name('invoices.generate');
+            Route::get('/invoices/{id}/download', [\App\Http\Controllers\Dashboard\Admin\InvoicesController::class, 'download'])->name('invoices.download');
+            Route::post('/invoices/{id}/mark-paid', [\App\Http\Controllers\Dashboard\Admin\InvoicesController::class, 'markAsPaid'])->name('invoices.mark-paid');
+            Route::post('/invoices/{id}/mark-sent', [\App\Http\Controllers\Dashboard\Admin\InvoicesController::class, 'markAsSent'])->name('invoices.mark-sent');
+        });
+        
+        // Withdrawal management routes
+        Route::middleware('permission:manage_withdrawals')->group(function () {
+            Route::get('/withdrawals', [AdminWithdrawalsController::class, 'index'])->name('withdrawals');
+            Route::post('/withdrawals/{id}/approve', [AdminWithdrawalsController::class, 'approve'])->name('withdrawals.approve');
+            Route::post('/withdrawals/{id}/reject', [AdminWithdrawalsController::class, 'reject'])->name('withdrawals.reject');
+            Route::post('/withdrawals/{id}/mark-paid', [AdminWithdrawalsController::class, 'markPaid'])->name('withdrawals.mark-paid');
+            Route::get('/withdrawals/export/csv', [AdminWithdrawalsController::class, 'exportCsv'])->name('withdrawals.export.csv');
+            Route::get('/withdrawals/export/excel', [AdminWithdrawalsController::class, 'exportExcel'])->name('withdrawals.export.excel');
+            Route::get('/withdrawals/export/pdf', [AdminWithdrawalsController::class, 'exportPdf'])->name('withdrawals.export.pdf');
+        });
+        
+        // Reports routes (accessible with any admin permission)
         Route::get('/reports', [ReportsController::class, 'index'])->name('reports');
         Route::get('/analytics/geo', [ReportsController::class, 'geo'])->name('analytics.geo');
         Route::get('/analytics/device', [ReportsController::class, 'device'])->name('analytics.device');
+        
+        // Contact messages routes (accessible with any admin permission)
         Route::get('/contact-messages', [ContactMessagesController::class, 'index'])->name('contact-messages');
         Route::get('/contact-messages/{id}', [ContactMessagesController::class, 'show'])->name('contact-messages.show');
         Route::post('/contact-messages/{id}/mark-read', [ContactMessagesController::class, 'markAsRead'])->name('contact-messages.mark-read');
         Route::post('/contact-messages/{id}/mark-unread', [ContactMessagesController::class, 'markAsUnread'])->name('contact-messages.mark-unread');
         Route::delete('/contact-messages/{id}', [ContactMessagesController::class, 'destroy'])->name('contact-messages.destroy');
-        Route::resource('manual-payment-accounts', ManualPaymentAccountsController::class);
-        Route::resource('allowed-account-types', AllowedAccountTypesController::class);
-        Route::post('allowed-account-types/{allowedAccountType}/toggle-status', [AllowedAccountTypesController::class, 'toggleStatus'])->name('allowed-account-types.toggle-status');
-        Route::post('/manual-payment-accounts/{id}/toggle-status', [ManualPaymentAccountsController::class, 'toggleStatus'])->name('manual-payment-accounts.toggle-status');
-        Route::resource('target-countries', TargetCountriesController::class);
-        Route::post('/target-countries/{targetCountry}/toggle-status', [TargetCountriesController::class, 'toggleStatus'])->name('target-countries.toggle-status');
-        // Device management routes
-        Route::get('/target-countries/devices/create', [TargetCountriesController::class, 'createDevice'])->name('target-countries.create-device');
-        Route::post('/target-countries/devices', [TargetCountriesController::class, 'storeDevice'])->name('target-countries.store-device');
-        Route::get('/target-countries/devices/{targetDevice}/edit', [TargetCountriesController::class, 'editDevice'])->name('target-countries.edit-device');
-        Route::put('/target-countries/devices/{targetDevice}', [TargetCountriesController::class, 'updateDevice'])->name('target-countries.update-device');
-        Route::delete('/target-countries/devices/{targetDevice}', [TargetCountriesController::class, 'destroyDevice'])->name('target-countries.destroy-device');
-        Route::post('/target-countries/devices/{targetDevice}/toggle-status', [TargetCountriesController::class, 'toggleDeviceStatus'])->name('target-countries.toggle-device-status');
+        
+        // Settings and configuration routes
+        Route::middleware('permission:manage_settings')->group(function () {
+            Route::resource('manual-payment-accounts', ManualPaymentAccountsController::class);
+            Route::resource('allowed-account-types', AllowedAccountTypesController::class);
+            Route::post('allowed-account-types/{allowedAccountType}/toggle-status', [AllowedAccountTypesController::class, 'toggleStatus'])->name('allowed-account-types.toggle-status');
+            Route::post('/manual-payment-accounts/{id}/toggle-status', [ManualPaymentAccountsController::class, 'toggleStatus'])->name('manual-payment-accounts.toggle-status');
+            Route::resource('target-countries', TargetCountriesController::class);
+            Route::post('/target-countries/{targetCountry}/toggle-status', [TargetCountriesController::class, 'toggleStatus'])->name('target-countries.toggle-status');
+            Route::get('/target-countries/devices/create', [TargetCountriesController::class, 'createDevice'])->name('target-countries.create-device');
+            Route::post('/target-countries/devices', [TargetCountriesController::class, 'storeDevice'])->name('target-countries.store-device');
+            Route::get('/target-countries/devices/{targetDevice}/edit', [TargetCountriesController::class, 'editDevice'])->name('target-countries.edit-device');
+            Route::put('/target-countries/devices/{targetDevice}', [TargetCountriesController::class, 'updateDevice'])->name('target-countries.update-device');
+            Route::delete('/target-countries/devices/{targetDevice}', [TargetCountriesController::class, 'destroyDevice'])->name('target-countries.destroy-device');
+            Route::post('/target-countries/devices/{targetDevice}/toggle-status', [TargetCountriesController::class, 'toggleDeviceStatus'])->name('target-countries.toggle-device-status');
+            Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
+            Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');
+        });
+        
+        // Notifications routes (accessible with any admin permission)
         Route::get('/notifications', [NotificationsController::class, 'index'])->name('notifications.index');
         Route::get('/notifications/recent', [NotificationsController::class, 'recent'])->name('notifications.recent');
         Route::post('/notifications/{notification}/read', [NotificationsController::class, 'markAsRead'])->name('notifications.mark-read');
         Route::post('/notifications/{notification}/unread', [NotificationsController::class, 'markAsUnread'])->name('notifications.mark-unread');
         Route::post('/notifications/mark-all-read', [NotificationsController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
-        Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
-        Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');
+        
+        // Profile routes (accessible with any admin permission)
         Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
         Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
+        
+        // Security / 2FA routes (accessible with any admin permission)
+        Route::get('/security/two-factor', [\App\Http\Controllers\Dashboard\Admin\SecurityController::class, 'show'])->name('security.two-factor');
+        Route::post('/security/two-factor/enable', [\App\Http\Controllers\Dashboard\Admin\SecurityController::class, 'enable'])->name('security.two-factor.enable');
+        Route::post('/security/two-factor/disable', [\App\Http\Controllers\Dashboard\Admin\SecurityController::class, 'disable'])->name('security.two-factor.disable');
+        Route::get('/security/two-factor/recovery-codes', [\App\Http\Controllers\Dashboard\Admin\SecurityController::class, 'recoveryCodes'])->name('security.two-factor.recovery-codes');
+        
+        // CMS routes (accessible with manage_settings permission)
+        Route::middleware('permission:manage_settings')->group(function () {
+            Route::resource('announcements', \App\Http\Controllers\Dashboard\Admin\AnnouncementsController::class);
+            Route::resource('email-templates', \App\Http\Controllers\Dashboard\Admin\EmailTemplatesController::class);
+            Route::resource('pages', \App\Http\Controllers\Dashboard\Admin\PagesController::class);
+        });
+        
+        // Support tickets routes (accessible with any admin permission)
+        Route::prefix('support-tickets')->name('support-tickets.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Dashboard\Admin\SupportTicketsController::class, 'index'])->name('index');
+            Route::get('/{supportTicket}', [\App\Http\Controllers\Dashboard\Admin\SupportTicketsController::class, 'show'])->name('show');
+            Route::put('/{supportTicket}', [\App\Http\Controllers\Dashboard\Admin\SupportTicketsController::class, 'update'])->name('update');
+            Route::post('/{supportTicket}/reply', [\App\Http\Controllers\Dashboard\Admin\SupportTicketsController::class, 'reply'])->name('reply');
+            Route::delete('/{supportTicket}', [\App\Http\Controllers\Dashboard\Admin\SupportTicketsController::class, 'destroy'])->name('destroy');
+        });
     });
     
     // Advertiser Dashboard Routes (only for advertiser role)
@@ -211,6 +312,14 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'a
         Route::post('/notifications/mark-all-read', [\App\Http\Controllers\Dashboard\Advertiser\NotificationsController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
         Route::get('/profile', [AdvertiserProfileController::class, 'index'])->name('profile');
         Route::post('/profile', [AdvertiserProfileController::class, 'update'])->name('profile.update');
+        // Support Tickets Routes
+        Route::prefix('support-tickets')->name('support-tickets.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Dashboard\User\SupportTicketsController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Dashboard\User\SupportTicketsController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Dashboard\User\SupportTicketsController::class, 'store'])->name('store');
+            Route::get('/{supportTicket}', [\App\Http\Controllers\Dashboard\User\SupportTicketsController::class, 'show'])->name('show');
+            Route::post('/{supportTicket}/reply', [\App\Http\Controllers\Dashboard\User\SupportTicketsController::class, 'reply'])->name('reply');
+        });
     });
     
     // Publisher Dashboard Routes (only for publisher role)
@@ -248,6 +357,14 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'a
         Route::post('/notifications/mark-all-read', [\App\Http\Controllers\Dashboard\Publisher\NotificationsController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
         Route::get('/profile', [PublisherProfileController::class, 'index'])->name('profile');
         Route::post('/profile', [PublisherProfileController::class, 'update'])->name('profile.update');
+        // Support Tickets Routes
+        Route::prefix('support-tickets')->name('support-tickets.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Dashboard\User\SupportTicketsController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Dashboard\User\SupportTicketsController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Dashboard\User\SupportTicketsController::class, 'store'])->name('store');
+            Route::get('/{supportTicket}', [\App\Http\Controllers\Dashboard\User\SupportTicketsController::class, 'show'])->name('show');
+            Route::post('/{supportTicket}/reply', [\App\Http\Controllers\Dashboard\User\SupportTicketsController::class, 'reply'])->name('reply');
+        });
     });
 });
 

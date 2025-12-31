@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Dashboard\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class SettingsController extends Controller
 {
@@ -53,6 +55,9 @@ class SettingsController extends Controller
             'global_max_clicks_per_ip_per_day' => Setting::get('global_max_clicks_per_ip_per_day', null),
             // Publisher website approval
             'auto_approve_publisher_websites' => Setting::get('auto_approve_publisher_websites', false),
+            // Referral settings
+            'referral_commission_rate' => Setting::get('referral_commission_rate', 5.00),
+            'referral_deposit_bonus_rate' => Setting::get('referral_deposit_bonus_rate', 5.00),
         ];
         
         return view('dashboard.admin.settings', compact('settings'));
@@ -85,6 +90,12 @@ class SettingsController extends Controller
                 
                 Setting::set('admin_percentage', $adminPercent, 'float', 'revenue');
                 Setting::set('publisher_percentage', $publisherPercent, 'float', 'revenue');
+                
+                // Log activity
+                ActivityLogService::logSettingsUpdate('revenue', [
+                    'admin_percentage' => $adminPercent,
+                    'publisher_percentage' => $publisherPercent,
+                ], Auth::user());
                 
                 return back()->with('success', 'Revenue share settings updated successfully.');
                 
@@ -248,6 +259,23 @@ class SettingsController extends Controller
                 Setting::set('auto_approve_publisher_websites', $request->has('auto_approve_publisher_websites'), 'boolean', 'publisher');
                 
                 return back()->with('success', 'Publisher settings updated successfully.');
+                
+            case 'referral':
+                $request->validate([
+                    'referral_commission_rate' => 'required|numeric|min:0|max:100',
+                    'referral_deposit_bonus_rate' => 'required|numeric|min:0|max:100',
+                ]);
+                
+                Setting::set('referral_commission_rate', $request->referral_commission_rate, 'float', 'referral');
+                Setting::set('referral_deposit_bonus_rate', $request->referral_deposit_bonus_rate, 'float', 'referral');
+                
+                // Log activity
+                ActivityLogService::logSettingsUpdate('referral', [
+                    'referral_commission_rate' => $request->referral_commission_rate,
+                    'referral_deposit_bonus_rate' => $request->referral_deposit_bonus_rate,
+                ], Auth::user());
+                
+                return back()->with('success', 'Referral program settings updated successfully.');
                 
             default:
                 return back()->withErrors(['error' => 'Invalid section.']);
