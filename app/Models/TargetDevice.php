@@ -16,6 +16,7 @@ class TargetDevice extends Model
 
     protected $casts = [
         'is_enabled' => 'boolean',
+        
     ];
 
     /**

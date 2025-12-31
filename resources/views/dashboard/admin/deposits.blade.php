@@ -544,8 +544,19 @@
 
     <!-- Deposits Table -->
     <div class="card">
-        <div class="card-header">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
             <h3 class="card-title">All Deposits</h3>
+            <div style="display: flex; gap: 10px;">
+                <a href="{{ route('dashboard.admin.deposits.export.csv', request()->query()) }}" class="btn btn-sm" style="background-color: #28a745; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-file-csv"></i> CSV
+                </a>
+                <a href="{{ route('dashboard.admin.deposits.export.excel', request()->query()) }}" class="btn btn-sm" style="background-color: #217346; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-file-excel"></i> Excel
+                </a>
+                <a href="{{ route('dashboard.admin.deposits.export.pdf', request()->query()) }}" class="btn btn-sm" style="background-color: #dc3545; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </a>
+            </div>
         </div>
         <div class="card-body">
             @if(session('success'))

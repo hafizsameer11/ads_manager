@@ -130,10 +130,16 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'a
         Route::get('/deposits', [\App\Http\Controllers\Dashboard\Admin\DepositsController::class, 'index'])->name('deposits');
         Route::post('/deposits/{id}/approve', [\App\Http\Controllers\Dashboard\Admin\DepositsController::class, 'approve'])->name('deposits.approve');
         Route::post('/deposits/{id}/reject', [\App\Http\Controllers\Dashboard\Admin\DepositsController::class, 'reject'])->name('deposits.reject');
+        Route::get('/deposits/export/csv', [\App\Http\Controllers\Dashboard\Admin\DepositsController::class, 'exportCsv'])->name('deposits.export.csv');
+        Route::get('/deposits/export/excel', [\App\Http\Controllers\Dashboard\Admin\DepositsController::class, 'exportExcel'])->name('deposits.export.excel');
+        Route::get('/deposits/export/pdf', [\App\Http\Controllers\Dashboard\Admin\DepositsController::class, 'exportPdf'])->name('deposits.export.pdf');
         Route::get('/withdrawals', [AdminWithdrawalsController::class, 'index'])->name('withdrawals');
         Route::post('/withdrawals/{id}/approve', [AdminWithdrawalsController::class, 'approve'])->name('withdrawals.approve');
         Route::post('/withdrawals/{id}/reject', [AdminWithdrawalsController::class, 'reject'])->name('withdrawals.reject');
         Route::post('/withdrawals/{id}/mark-paid', [AdminWithdrawalsController::class, 'markPaid'])->name('withdrawals.mark-paid');
+        Route::get('/withdrawals/export/csv', [AdminWithdrawalsController::class, 'exportCsv'])->name('withdrawals.export.csv');
+        Route::get('/withdrawals/export/excel', [AdminWithdrawalsController::class, 'exportExcel'])->name('withdrawals.export.excel');
+        Route::get('/withdrawals/export/pdf', [AdminWithdrawalsController::class, 'exportPdf'])->name('withdrawals.export.pdf');
         Route::post('/campaigns/{id}/approve', [AdminCampaignsController::class, 'approve'])->name('campaigns.approve');
         Route::post('/campaigns/{id}/reject', [AdminCampaignsController::class, 'reject'])->name('campaigns.reject');
         Route::post('/campaigns/{id}/pause', [AdminCampaignsController::class, 'pause'])->name('campaigns.pause');

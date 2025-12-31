@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
 use App\Mail\UserApprovedMail;
+use Illuminate\Support\Facades\Response;
 
 class DepositsController extends Controller
 {
@@ -156,5 +157,193 @@ class DepositsController extends Controller
             
             return back()->with('success', 'Deposit rejected successfully.');
         });
+    }
+
+    /**
+     * Export deposits to CSV.
+     */
+    public function exportCsv(Request $request)
+    {
+        $query = $this->buildQuery($request);
+        $deposits = $query->get();
+
+        $filename = 'deposits_' . date('Y-m-d_His') . '.csv';
+        
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        $callback = function() use ($deposits) {
+            $file = fopen('php://output', 'w');
+            
+            // Add BOM for Excel compatibility
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            
+            // Headers
+            fputcsv($file, [
+                'ID',
+                'Transaction ID',
+                'Advertiser',
+                'Email',
+                'Amount',
+                'Payment Method',
+                'Status',
+                'Created At',
+                'Processed At',
+                'Notes'
+            ]);
+
+            // Data rows
+            foreach ($deposits as $deposit) {
+                $advertiser = $deposit->transactionable;
+                $user = $advertiser && method_exists($advertiser, 'user') ? $advertiser->user : null;
+                
+                fputcsv($file, [
+                    $deposit->id,
+                    $deposit->transaction_id ?? 'N/A',
+                    $user ? $user->name : 'N/A',
+                    $user ? $user->email : 'N/A',
+                    number_format($deposit->amount, 2),
+                    $deposit->payment_method ?? 'N/A',
+                    ucfirst($deposit->status),
+                    $deposit->created_at->format('Y-m-d H:i:s'),
+                    $deposit->processed_at ? $deposit->processed_at->format('Y-m-d H:i:s') : 'N/A',
+                    $deposit->notes ?? ''
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return Response::stream($callback, 200, $headers);
+    }
+
+    /**
+     * Export deposits to Excel (CSV format).
+     */
+    public function exportExcel(Request $request)
+    {
+        $query = $this->buildQuery($request);
+        $deposits = $query->get();
+
+        $filename = 'deposits_' . date('Y-m-d_His') . '.xls';
+        
+        $headers = [
+            'Content-Type' => 'application/vnd.ms-excel',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        $callback = function() use ($deposits) {
+            $file = fopen('php://output', 'w');
+            
+            // Add BOM for Excel compatibility
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            
+            // Headers
+            fputcsv($file, [
+                'ID',
+                'Transaction ID',
+                'Advertiser',
+                'Email',
+                'Amount',
+                'Payment Method',
+                'Status',
+                'Created At',
+                'Processed At',
+                'Notes'
+            ], "\t");
+
+            // Data rows
+            foreach ($deposits as $deposit) {
+                $advertiser = $deposit->transactionable;
+                $user = $advertiser && method_exists($advertiser, 'user') ? $advertiser->user : null;
+                
+                fputcsv($file, [
+                    $deposit->id,
+                    $deposit->transaction_id ?? 'N/A',
+                    $user ? $user->name : 'N/A',
+                    $user ? $user->email : 'N/A',
+                    number_format($deposit->amount, 2),
+                    $deposit->payment_method ?? 'N/A',
+                    ucfirst($deposit->status),
+                    $deposit->created_at->format('Y-m-d H:i:s'),
+                    $deposit->processed_at ? $deposit->processed_at->format('Y-m-d H:i:s') : 'N/A',
+                    $deposit->notes ?? ''
+                ], "\t");
+            }
+
+            fclose($file);
+        };
+
+        return Response::stream($callback, 200, $headers);
+    }
+
+    /**
+     * Export deposits to PDF.
+     */
+    public function exportPdf(Request $request)
+    {
+        $query = $this->buildQuery($request);
+        $deposits = $query->get();
+
+        $html = view('dashboard.admin.exports.deposits-pdf', compact('deposits'))->render();
+        
+        // Use DomPDF if available
+        if (class_exists('\Barryvdh\DomPDF\Facade\Pdf')) {
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html);
+            $pdf->setPaper('a4', 'landscape');
+            return $pdf->download('deposits_' . date('Y-m-d_His') . '.pdf');
+        } elseif (class_exists('\Dompdf\Dompdf')) {
+            // Use Dompdf directly if available
+            $dompdf = new \Dompdf\Dompdf();
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('A4', 'landscape');
+            $dompdf->render();
+            return response($dompdf->output())
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Disposition', 'attachment; filename="deposits_' . date('Y-m-d_His') . '.pdf"');
+        } else {
+            // Fallback: return HTML that can be printed as PDF using browser print
+            return response($html)
+                ->header('Content-Type', 'text/html')
+                ->header('Content-Disposition', 'inline; filename="deposits_' . date('Y-m-d_His') . '.html"');
+        }
+    }
+
+    /**
+     * Build query with filters.
+     */
+    private function buildQuery(Request $request)
+    {
+        $query = Transaction::where('type', 'deposit')
+            ->with('transactionable.user');
+        
+        // Filter by status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        
+        // Filter by payment method
+        if ($request->filled('payment_method')) {
+            $query->where('payment_method', $request->payment_method);
+        }
+        
+        // Search
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('transaction_id', 'like', "%{$search}%")
+                  ->orWhere('id', $search)
+                  ->orWhereHasMorph('transactionable', [Advertiser::class], function($advertiserQuery) use ($search) {
+                      $advertiserQuery->whereHas('user', function($userQuery) use ($search) {
+                          $userQuery->where('name', 'like', "%{$search}%")
+                                   ->orWhere('email', 'like', "%{$search}%");
+                      });
+                  });
+            });
+        }
+        
+        return $query->latest();
     }
 }
