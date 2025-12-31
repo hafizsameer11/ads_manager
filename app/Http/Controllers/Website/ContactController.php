@@ -42,6 +42,15 @@ class ContactController extends Controller
             'user_agent' => $request->userAgent(),
         ]);
 
+        // Notify admin about new contact message
+        \App\Services\NotificationService::notifyAdmins(
+            'contact_message_received',
+            'general',
+            'New Contact Message',
+            "A new contact message has been received from {$validated['name']} ({$validated['email']}): {$validated['subject']}",
+            ['contact_submission_id' => $submission->id, 'name' => $validated['name'], 'email' => $validated['email']]
+        );
+
         // Send email to admin
         try {
             $adminEmail = config('mail.admin_email', config('mail.from.address'));

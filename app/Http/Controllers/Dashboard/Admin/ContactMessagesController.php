@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Dashboard\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ContactSubmission;
+use App\Models\Notification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ContactMessagesController extends Controller
 {
@@ -16,6 +18,19 @@ class ContactMessagesController extends Controller
      */
     public function index(Request $request)
     {
+        // Mark all general category notifications (contact messages) as read when visiting this page
+        if (Auth::check() && Auth::user()->isAdmin()) {
+            Notification::where('notifiable_type', \App\Models\User::class)
+                ->where('notifiable_id', Auth::id())
+                ->where('category', 'general')
+                ->where('type', 'contact_message_received')
+                ->unread()
+                ->update([
+                    'is_read' => true,
+                    'read_at' => now(),
+                ]);
+        }
+        
         $query = ContactSubmission::query();
         
         // Filter by read status
@@ -114,6 +129,7 @@ class ContactMessagesController extends Controller
             ->with('success', 'Message deleted successfully.');
     }
 }
+
 
 
 

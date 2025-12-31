@@ -165,11 +165,13 @@
                         <div class="form-group">
                             <label for="target_countries">Target Countries</label>
                             <select id="target_countries" name="target_countries[]" class="form-control" multiple>
-                                <option value="US">United States</option>
-                                <option value="GB">United Kingdom</option>
-                                <option value="CA">Canada</option>
-                                <option value="AU">Australia</option>
-                                <!-- Add more countries as needed -->
+                                @forelse($targetCountries ?? [] as $country)
+                                    <option value="{{ $country->code }}" {{ in_array($country->code, old('target_countries', [])) ? 'selected' : '' }}>
+                                        {{ $country->name }} ({{ $country->code }})
+                                    </option>
+                                @empty
+                                    <option value="" disabled>No countries available. Please contact admin.</option>
+                                @endforelse
                             </select>
                             <small class="text-muted">Hold Ctrl/Cmd to select multiple countries</small>
                         </div>
@@ -178,9 +180,13 @@
                         <div class="form-group">
                             <label for="target_devices">Target Devices</label>
                             <select id="target_devices" name="target_devices[]" class="form-control" multiple>
-                                <option value="desktop">Desktop</option>
-                                <option value="mobile">Mobile</option>
-                                <option value="tablet">Tablet</option>
+                                @forelse($targetDevices ?? [] as $device)
+                                    <option value="{{ $device->id }}" {{ in_array($device->id, old('target_devices', [])) ? 'selected' : '' }}>
+                                        {{ $device->name }}
+                                    </option>
+                                @empty
+                                    <option value="" disabled>No devices available. Please contact admin.</option>
+                                @endforelse
                             </select>
                             <small class="text-muted">Hold Ctrl/Cmd to select multiple devices</small>
                         </div>

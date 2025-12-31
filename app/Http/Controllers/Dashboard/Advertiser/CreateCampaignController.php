@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Dashboard\Advertiser;
 
 use App\Http\Controllers\Controller;
 use App\Models\Campaign;
+use App\Models\TargetCountry;
+use App\Models\TargetDevice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -28,7 +30,11 @@ class CreateCampaignController extends Controller
                 ->with('error', 'Your account needs to be approved before creating campaigns.');
         }
         
-        return view('dashboard.advertiser.create-campaign', compact('advertiser'));
+        // Load enabled target countries and devices from database
+        $targetCountries = TargetCountry::enabled()->ordered()->get();
+        $targetDevices = TargetDevice::enabled()->ordered()->get();
+        
+        return view('dashboard.advertiser.create-campaign', compact('advertiser', 'targetCountries', 'targetDevices'));
     }
 
     /**

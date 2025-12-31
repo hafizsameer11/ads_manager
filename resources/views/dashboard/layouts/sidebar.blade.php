@@ -38,30 +38,45 @@
                     <a href="{{ route('dashboard.admin.users') }}" class="nav-link">
                         <i class="fas fa-users"></i>
                         <span>Users</span>
+                        @if(isset($userNotifications) && $userNotifications > 0)
+                            <span class="sidebar-badge">New</span>
+                        @endif
                     </a>
                 </li>
                 <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.websites') ? 'active' : '' }}">
                     <a href="{{ route('dashboard.admin.websites') }}" class="nav-link">
                         <i class="fas fa-globe"></i>
                         <span>Websites</span>
+                        @if(isset($websiteNotifications) && $websiteNotifications > 0)
+                            <span class="sidebar-badge">New</span>
+                        @endif
                     </a>
                 </li>
                 <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.campaigns') ? 'active' : '' }}">
                     <a href="{{ route('dashboard.admin.campaigns') }}" class="nav-link">
                         <i class="fas fa-bullhorn"></i>
                         <span>Campaigns</span>
+                        @if(isset($campaignNotifications) && $campaignNotifications > 0)
+                            <span class="sidebar-badge">New</span>
+                        @endif
                     </a>
                 </li>
                 <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.deposits') ? 'active' : '' }}">
                     <a href="{{ route('dashboard.admin.deposits') }}" class="nav-link">
                         <i class="fas fa-money-bill-alt"></i>
                         <span>Deposits</span>
+                        @if(isset($paymentNotifications) && $paymentNotifications > 0)
+                            <span class="sidebar-badge">New</span>
+                        @endif
                     </a>
                 </li>
                 <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.withdrawals') ? 'active' : '' }}">
                     <a href="{{ route('dashboard.admin.withdrawals') }}" class="nav-link">
                         <i class="fas fa-money-bill-wave"></i>
                         <span>Withdrawals</span>
+                        @if(isset($withdrawalNotifications) && $withdrawalNotifications > 0)
+                            <span class="sidebar-badge">New</span>
+                        @endif
                     </a>
                 </li>
                 <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.reports') ? 'active' : '' }}">
@@ -74,12 +89,27 @@
                     <a href="{{ route('dashboard.admin.contact-messages') }}" class="nav-link">
                         <i class="fas fa-envelope"></i>
                         <span>Contact Messages</span>
+                        @if(isset($contactNotifications) && $contactNotifications > 0)
+                            <span class="sidebar-badge">New</span>
+                        @endif
                     </a>
                 </li>
                 <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.manual-payment-accounts') || str_contains($currentRoute, 'dashboard.admin.allowed-account-types') ? 'active' : '' }}">
                     <a href="{{ route('dashboard.admin.manual-payment-accounts.index') }}" class="nav-link">
                         <i class="fas fa-credit-card"></i>
                         <span>Payment Accounts</span>
+                    </a>
+                </li>
+                <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.target-countries') ? 'active' : '' }}">
+                    <a href="{{ route('dashboard.admin.target-countries.index') }}" class="nav-link">
+                        <i class="fas fa-globe-americas"></i>
+                        <span>Target Countries</span>
+                    </a>
+                </li>
+                <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.notifications') ? 'active' : '' }}">
+                    <a href="{{ route('dashboard.admin.notifications.index') }}" class="nav-link">
+                        <i class="fas fa-bell"></i>
+                        <span>Notifications</span>
                     </a>
                 </li>
                 <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.settings') ? 'active' : '' }}">

@@ -46,6 +46,17 @@ class PaymentService
 
         // Balance is NOT updated here - admin must approve deposit first
 
+        // Notify admin about new deposit request
+        \App\Services\NotificationService::notifyAdmins(
+            'deposit_requested',
+            'payment',
+            'New Deposit Request',
+            "A new deposit request of $" . number_format($amount, 2) . " has been submitted by {$advertiser->user->name} via {$paymentMethod}.",
+            ['transaction_id' => $transaction->id, 'advertiser_id' => $advertiser->id, 'amount' => $amount]
+        );
+
+        // Do NOT notify advertiser when they submit deposit - only notify when admin approves/rejects
+
         return $transaction;
     }
 
@@ -159,6 +170,16 @@ class PaymentService
     public function getMaximumWithdrawal(): float
     {
         return (float) Setting::get('maximum_payout', 10000.00);
+    }
+
+    /**
+     * Get maximum deposit amount.
+     *
+     * @return float
+     */
+    public function getMaximumDeposit(): float
+    {
+        return (float) Setting::get('maximum_deposit', 50000.00);
     }
 }
 

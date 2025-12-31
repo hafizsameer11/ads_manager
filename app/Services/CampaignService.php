@@ -51,7 +51,13 @@ class CampaignService
                 $this->activateCampaign($campaign);
             } else {
                 // Notify admin about pending campaign
-                // TODO: Notify admin
+                $this->notificationService->notifyAdmins(
+                    'campaign_created',
+                    'campaign',
+                    'New Campaign Submitted',
+                    "A new campaign '{$campaign->name}' has been submitted by {$advertiser->user->name} and is pending approval.",
+                    ['campaign_id' => $campaign->id, 'advertiser_id' => $advertiser->id]
+                );
             }
 
             return $campaign;
@@ -77,7 +83,7 @@ class CampaignService
             // Notify advertiser
             $advertiser = $campaign->advertiser;
             if ($advertiser && $advertiser->user) {
-                $this->notificationService->notifyCampaignApproval(
+                NotificationService::notifyCampaignApproval(
                     $advertiser->user,
                     $campaign->id,
                     'approved'
@@ -107,10 +113,11 @@ class CampaignService
             // Notify advertiser
             $advertiser = $campaign->advertiser;
             if ($advertiser && $advertiser->user) {
-                $this->notificationService->notifyCampaignApproval(
+                NotificationService::notifyCampaignApproval(
                     $advertiser->user,
                     $campaign->id,
-                    'rejected'
+                    'rejected',
+                    $reason
                 );
             }
 

@@ -115,6 +115,20 @@ class PaymentsController extends Controller
                 $paymentDetails
             );
 
+            // Create notification for admins
+            \App\Services\NotificationService::notifyAdmins(
+                'withdrawal_requested',
+                'withdrawal',
+                'New Withdrawal Request',
+                "Publisher {$publisher->user->name} has submitted a withdrawal request of $" . number_format($request->amount, 2),
+                [
+                    'withdrawal_id' => $withdrawal->id,
+                    'publisher_id' => $publisher->id,
+                    'amount' => $request->amount,
+                    'account_type' => $accountType->name,
+                ]
+            );
+
             return back()->with('success', 'Withdrawal request submitted successfully.');
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);

@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Dashboard\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Notification;
 use App\Services\NotificationService;
 use App\Mail\UserApprovedMail;
 use App\Mail\UserRejectedMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Auth;
 
 class UsersController extends Controller
 {
@@ -26,6 +28,18 @@ class UsersController extends Controller
      */
     public function index(Request $request)
     {
+        // Mark all user category notifications as read when visiting this page
+        if (Auth::check() && Auth::user()->isAdmin()) {
+            Notification::where('notifiable_type', \App\Models\User::class)
+                ->where('notifiable_id', Auth::id())
+                ->where('category', 'user')
+                ->unread()
+                ->update([
+                    'is_read' => true,
+                    'read_at' => now(),
+                ]);
+        }
+        
         $query = User::with(['publisher', 'advertiser'])
             ->where('role', '!=', 'admin'); // Exclude admin users from the list
         
@@ -106,7 +120,7 @@ class UsersController extends Controller
             Mail::to($user->email)->send(new UserApprovedMail($user));
             
             // Also create in-app notification
-            $this->notificationService->notifyAdvertiserApproval($user, 'approved');
+            \App\Services\NotificationService::notifyAdvertiserApproval($user, 'approved');
             
             return back()->with('success', 'Advertiser approved successfully.');
         }
@@ -141,7 +155,7 @@ class UsersController extends Controller
             Mail::to($user->email)->send(new UserRejectedMail($user));
             
             // Also create in-app notification
-            $this->notificationService->notifyAdvertiserApproval($user, 'rejected');
+            \App\Services\NotificationService::notifyAdvertiserApproval($user, 'rejected');
             
             return back()->with('success', 'Advertiser rejected.');
         }

@@ -22,6 +22,9 @@ class SettingsController extends Controller
             'minimum_payout' => Setting::get('minimum_payout', 50),
             'maximum_payout' => Setting::get('maximum_payout', 10000),
             'payout_cycle' => Setting::get('payout_cycle', 'net30'),
+            // Deposit settings
+            'minimum_deposit' => Setting::get('minimum_deposit', 10),
+            'maximum_deposit' => Setting::get('maximum_deposit', 50000),
             'default_cpm_rate' => Setting::get('default_cpm_rate', 1.00),
             'default_cpc_rate' => Setting::get('default_cpc_rate', 0.10),
             'click_limit_per_ip' => Setting::get('click_limit_per_ip', 10),
@@ -101,6 +104,21 @@ class SettingsController extends Controller
                 Setting::set('payout_cycle', $request->payout_cycle, 'string', 'payout');
                 
                 return back()->with('success', 'Payout settings updated successfully.');
+                
+            case 'deposit':
+                $request->validate([
+                    'minimum_deposit' => 'required|numeric|min:1',
+                    'maximum_deposit' => 'required|numeric|min:1',
+                ]);
+                
+                if ($request->maximum_deposit < $request->minimum_deposit) {
+                    return back()->withErrors(['error' => 'Maximum deposit must be greater than or equal to minimum deposit.']);
+                }
+                
+                Setting::set('minimum_deposit', $request->minimum_deposit, 'float', 'deposit');
+                Setting::set('maximum_deposit', $request->maximum_deposit, 'float', 'deposit');
+                
+                return back()->with('success', 'Deposit settings updated successfully.');
                 
             case 'rates':
                 $request->validate([

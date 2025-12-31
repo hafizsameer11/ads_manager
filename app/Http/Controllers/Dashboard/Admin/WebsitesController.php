@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Website;
 use App\Models\Impression;
 use App\Models\Click;
+use App\Models\Notification;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class WebsitesController extends Controller
 {
@@ -26,6 +28,19 @@ class WebsitesController extends Controller
      */
     public function index(Request $request)
     {
+        // Mark all website-related notifications (general category with website_added type) as read when visiting this page
+        if (Auth::check() && Auth::user()->isAdmin()) {
+            Notification::where('notifiable_type', \App\Models\User::class)
+                ->where('notifiable_id', Auth::id())
+                ->where('category', 'general')
+                ->where('type', 'website_added')
+                ->unread()
+                ->update([
+                    'is_read' => true,
+                    'read_at' => now(),
+                ]);
+        }
+        
         $query = Website::with(['publisher.user', 'adUnits']);
         
         // Filter by status

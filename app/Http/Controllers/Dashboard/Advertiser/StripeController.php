@@ -25,8 +25,13 @@ class StripeController extends Controller
      */
     public function checkout(Request $request)
     {
+        // Get deposit limits from settings
+        $paymentService = app(\App\Services\PaymentService::class);
+        $minimumDeposit = $paymentService->getMinimumDeposit();
+        $maximumDeposit = $paymentService->getMaximumDeposit();
+
         $request->validate([
-            'amount' => 'required|numeric|min:10',
+            'amount' => "required|numeric|min:{$minimumDeposit}|max:{$maximumDeposit}",
         ]);
 
         $user = Auth::user();
@@ -89,5 +94,6 @@ class StripeController extends Controller
             ->with('info', 'Payment was cancelled. You can try again when ready.');
     }
 }
+
 
 

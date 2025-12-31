@@ -89,6 +89,11 @@ class BillingController extends Controller
                 ->sum('amount'),
         ];
         
+        // Get deposit limits from settings
+        $paymentService = app(\App\Services\PaymentService::class);
+        $minimumDeposit = $paymentService->getMinimumDeposit();
+        $maximumDeposit = $paymentService->getMaximumDeposit();
+        
         return view('dashboard.advertiser.billing', compact(
             'transactions', 
             'summary', 
@@ -99,7 +104,9 @@ class BillingController extends Controller
             'coinpaymentsEnabled',
             'faucetpayEnabled',
             'bankSwiftEnabled',
-            'wiseEnabled'
+            'wiseEnabled',
+            'minimumDeposit',
+            'maximumDeposit'
         ));
     }
 
@@ -143,8 +150,13 @@ class BillingController extends Controller
             $allowedMethods = ['manual']; // At least allow manual if nothing else
         }
 
+        // Get deposit limits from settings
+        $paymentService = app(\App\Services\PaymentService::class);
+        $minimumDeposit = $paymentService->getMinimumDeposit();
+        $maximumDeposit = $paymentService->getMaximumDeposit();
+
         $validationRules = [
-            'amount' => 'required|numeric|min:10',
+            'amount' => "required|numeric|min:{$minimumDeposit}|max:{$maximumDeposit}",
             'payment_method' => 'required|in:' . implode(',', $allowedMethods),
             'transaction_id' => 'nullable|string|max:255',
             'notes' => 'nullable|string|max:500',

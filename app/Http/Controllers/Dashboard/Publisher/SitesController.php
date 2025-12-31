@@ -130,7 +130,16 @@ class SitesController extends Controller
         if ($autoApprove) {
             return back()->with('success', 'Website added and automatically approved!');
         } else {
-        return back()->with('success', 'Website added successfully. Please verify your domain ownership to get approved.');
+            // Notify admin about new website submission
+            \App\Services\NotificationService::notifyAdmins(
+                'website_added',
+                'general',
+                'New Website Added',
+                "A new website '{$website->name}' ({$website->domain}) has been added by {$publisher->user->name} and is pending approval.",
+                ['website_id' => $website->id, 'publisher_id' => $publisher->id, 'domain' => $website->domain]
+            );
+            
+            return back()->with('success', 'Website added successfully. Please verify your domain ownership to get approved.');
         }
     }
 

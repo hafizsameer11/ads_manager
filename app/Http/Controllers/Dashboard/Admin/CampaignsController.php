@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Dashboard\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Campaign;
+use App\Models\Notification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CampaignsController extends Controller
 {
@@ -15,6 +17,18 @@ class CampaignsController extends Controller
      */
     public function index(Request $request)
     {
+        // Mark all campaign category notifications as read when visiting this page
+        if (Auth::check() && Auth::user()->isAdmin()) {
+            Notification::where('notifiable_type', \App\Models\User::class)
+                ->where('notifiable_id', Auth::id())
+                ->where('category', 'campaign')
+                ->unread()
+                ->update([
+                    'is_read' => true,
+                    'read_at' => now(),
+                ]);
+        }
+        
         $query = Campaign::with(['advertiser.user', 'targeting']);
         
         // Filter by status

@@ -129,7 +129,7 @@
     <!-- Payout Settings -->
     <div class="card">
         <div class="card-header">
-            <h3 class="card-title">Payout Settings</h3>
+            <h3 class="card-title">Payout Settings (Publishers)</h3>
         </div>
         <div class="card-body">
             <form method="POST" action="{{ route('dashboard.admin.settings.update') }}">
@@ -165,6 +165,41 @@
                     </div>
                     <div class="col-md-12">
                         <button type="submit" class="btn btn-primary">Save Payout Settings</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Deposit Settings -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Deposit Settings (Advertisers)</h3>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ route('dashboard.admin.settings.update') }}">
+                @csrf
+                <input type="hidden" name="section" value="deposit">
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="minimum_deposit">Minimum Deposit Amount</label>
+                            <input type="number" id="minimum_deposit" name="minimum_deposit" class="form-control" 
+                                   value="{{ $settings['minimum_deposit'] ?? 10 }}" min="1" step="0.01" required>
+                            <small class="text-muted">Minimum amount required for deposit requests by advertisers</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="maximum_deposit">Maximum Deposit Amount</label>
+                            <input type="number" id="maximum_deposit" name="maximum_deposit" class="form-control" 
+                                   value="{{ $settings['maximum_deposit'] ?? 50000 }}" min="1" step="0.01" required>
+                            <small class="text-muted">Maximum amount allowed per deposit request by advertisers</small>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <button type="submit" class="btn btn-primary">Save Deposit Settings</button>
                     </div>
                 </div>
             </form>

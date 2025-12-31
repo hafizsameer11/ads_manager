@@ -8,21 +8,51 @@ use App\Models\User;
 class NotificationService
 {
     /**
-     * Create notification for user.
+     * Create a notification for admin users.
+     *
+     * @param  string  $type
+     * @param  string  $category
+     * @param  string  $title
+     * @param  string  $message
+     * @param  array  $data
+     * @return void
+     */
+    public static function notifyAdmins(string $type, string $category, string $title, string $message, array $data = []): void
+    {
+        $admins = User::where('role', 'admin')->get();
+
+        foreach ($admins as $admin) {
+            Notification::create([
+                'notifiable_type' => User::class,
+                'notifiable_id' => $admin->id,
+                'type' => $type,
+                'category' => $category,
+                'title' => $title,
+                'message' => $message,
+                'data' => $data,
+                'is_read' => false,
+            ]);
+        }
+    }
+
+    /**
+     * Create a notification for a specific user.
      *
      * @param  User  $user
      * @param  string  $type
+     * @param  string  $category
      * @param  string  $title
      * @param  string  $message
      * @param  array  $data
      * @return Notification
      */
-    public function create(User $user, string $type, string $title, string $message, array $data = []): Notification
+    public static function notifyUser(User $user, string $type, string $category, string $title, string $message, array $data = []): Notification
     {
         return Notification::create([
             'notifiable_type' => User::class,
             'notifiable_id' => $user->id,
             'type' => $type,
+            'category' => $category,
             'title' => $title,
             'message' => $message,
             'data' => $data,
@@ -31,135 +61,130 @@ class NotificationService
     }
 
     /**
-     * Create notification for campaign approval.
-     *
-     * @param  User  $user
-     * @param  int  $campaignId
-     * @param  string  $status
-     * @return Notification
-     */
-    public function notifyCampaignApproval(User $user, int $campaignId, string $status): Notification
-    {
-        $title = $status === 'approved' ? 'Campaign Approved' : 'Campaign Rejected';
-        $message = $status === 'approved' 
-            ? "Your campaign #{$campaignId} has been approved and is now active."
-            : "Your campaign #{$campaignId} has been rejected. Please check the details.";
-
-        return $this->create($user, 'campaign_approved', $title, $message, [
-            'campaign_id' => $campaignId,
-            'status' => $status,
-        ]);
-    }
-
-    /**
-     * Create notification for withdrawal processing.
+     * Notify publisher about withdrawal processing status.
      *
      * @param  User  $user
      * @param  int  $withdrawalId
      * @param  float  $amount
-     * @param  string  $status
+     * @param  string  $status (approved, rejected, processed)
+     * @param  string|null  $rejectionReason
      * @return Notification
      */
-    public function notifyWithdrawalProcessing(User $user, int $withdrawalId, float $amount, string $status): Notification
+    public static function notifyWithdrawalProcessing(User $user, int $withdrawalId, float $amount, string $status, ?string $rejectionReason = null): Notification
     {
-        $title = match($status) {
-            'approved' => 'Withdrawal Approved',
-            'rejected' => 'Withdrawal Rejected',
-            'processing' => 'Withdrawal Processing',
-            default => 'Withdrawal Update',
-        };
+        $statusMessages = [
+            'approved' => [
+                'title' => 'Withdrawal Approved',
+                'message' => "Your withdrawal request of $" . number_format($amount, 2) . " has been approved and is being processed.",
+            ],
+            'rejected' => [
+                'title' => 'Withdrawal Rejected',
+                'message' => "Your withdrawal request of $" . number_format($amount, 2) . " has been rejected. " . ($rejectionReason ? "Reason: {$rejectionReason}. " : "") . "The amount has been refunded to your account.",
+            ],
+            'processed' => [
+                'title' => 'Withdrawal Processed',
+                'message' => "Your withdrawal of $" . number_format($amount, 2) . " has been processed and payment has been sent.",
+            ],
+        ];
 
-        $message = match($status) {
-            'approved' => "Your withdrawal request #{$withdrawalId} for \${$amount} has been approved and processed.",
-            'rejected' => "Your withdrawal request #{$withdrawalId} for \${$amount} has been rejected.",
-            'processing' => "Your withdrawal request #{$withdrawalId} for \${$amount} is being processed.",
-            default => "Your withdrawal request #{$withdrawalId} has been updated.",
-        };
+        $messageData = $statusMessages[$status] ?? [
+            'title' => 'Withdrawal Update',
+            'message' => "Your withdrawal request of $" . number_format($amount, 2) . " status has been updated.",
+        ];
 
-        return $this->create($user, 'withdrawal_processed', $title, $message, [
-            'withdrawal_id' => $withdrawalId,
-            'amount' => $amount,
-            'status' => $status,
-        ]);
+        return self::notifyUser(
+            $user,
+            'withdrawal_' . $status,
+            'withdrawal',
+            $messageData['title'],
+            $messageData['message'],
+            [
+                'withdrawal_id' => $withdrawalId,
+                'amount' => $amount,
+                'status' => $status,
+                'rejection_reason' => $rejectionReason,
+            ]
+        );
     }
 
     /**
-     * Create notification for publisher approval.
+     * Notify advertiser about campaign approval/rejection.
      *
      * @param  User  $user
-     * @param  string  $status
+     * @param  int  $campaignId
+     * @param  string  $status (approved, rejected)
+     * @param  string|null  $rejectionReason
      * @return Notification
      */
-    public function notifyPublisherApproval(User $user, string $status): Notification
+    public static function notifyCampaignApproval(User $user, int $campaignId, string $status, ?string $rejectionReason = null): Notification
     {
-        $title = $status === 'approved' ? 'Publisher Account Approved' : 'Publisher Account Rejected';
-        $message = $status === 'approved'
-            ? 'Your publisher account has been approved. You can now start adding websites and creating ad units.'
-            : 'Your publisher account has been rejected. Please contact support for more information.';
+        $campaign = \App\Models\Campaign::find($campaignId);
+        $campaignName = $campaign ? $campaign->name : "Campaign #{$campaignId}";
+        
+        $statusMessages = [
+            'approved' => [
+                'title' => 'Campaign Approved',
+                'message' => "Your campaign '{$campaignName}' has been approved and is now active.",
+            ],
+            'rejected' => [
+                'title' => 'Campaign Rejected',
+                'message' => "Your campaign '{$campaignName}' has been rejected." . ($rejectionReason ? " Reason: {$rejectionReason}." : ""),
+            ],
+        ];
 
-        return $this->create($user, 'publisher_approved', $title, $message, [
-            'status' => $status,
-        ]);
+        $messageData = $statusMessages[$status] ?? [
+            'title' => 'Campaign Update',
+            'message' => "Your campaign '{$campaignName}' status has been updated.",
+        ];
+
+        return self::notifyUser(
+            $user,
+            'campaign_' . $status,
+            'campaign',
+            $messageData['title'],
+            $messageData['message'],
+            [
+                'campaign_id' => $campaignId,
+                'status' => $status,
+                'rejection_reason' => $rejectionReason,
+            ]
+        );
     }
 
     /**
-     * Create notification for advertiser approval.
+     * Notify advertiser about account approval/rejection.
      *
      * @param  User  $user
-     * @param  string  $status
+     * @param  string  $status (approved, rejected)
      * @return Notification
      */
-    public function notifyAdvertiserApproval(User $user, string $status): Notification
+    public static function notifyAdvertiserApproval(User $user, string $status): Notification
     {
-        $title = $status === 'approved' ? 'Advertiser Account Approved' : 'Advertiser Account Rejected';
-        $message = $status === 'approved'
-            ? 'Your advertiser account has been approved. You can now create campaigns and deposit funds.'
-            : 'Your advertiser account has been rejected. Please contact support for more information.';
+        $statusMessages = [
+            'approved' => [
+                'title' => 'Account Approved',
+                'message' => "Your advertiser account has been approved. You can now create campaigns and deposit funds.",
+            ],
+            'rejected' => [
+                'title' => 'Account Rejected',
+                'message' => "Your advertiser account has been rejected. Please contact support for more information.",
+            ],
+        ];
 
-        return $this->create($user, 'advertiser_approved', $title, $message, [
-            'status' => $status,
-        ]);
-    }
+        $messageData = $statusMessages[$status] ?? [
+            'title' => 'Account Update',
+            'message' => "Your advertiser account status has been updated.",
+        ];
 
-    /**
-     * Get unread notifications count for user.
-     *
-     * @param  User  $user
-     * @return int
-     */
-    public function getUnreadCount(User $user): int
-    {
-        return Notification::where('notifiable_type', User::class)
-            ->where('notifiable_id', $user->id)
-            ->where('is_read', false)
-            ->count();
-    }
-
-    /**
-     * Mark all notifications as read for user.
-     *
-     * @param  User  $user
-     * @return int
-     */
-    public function markAllAsRead(User $user): int
-    {
-        return Notification::where('notifiable_type', User::class)
-            ->where('notifiable_id', $user->id)
-            ->where('is_read', false)
-            ->update([
-                'is_read' => true,
-                'read_at' => now(),
-            ]);
+        return self::notifyUser(
+            $user,
+            'advertiser_' . $status,
+            'user',
+            $messageData['title'],
+            $messageData['message'],
+            [
+                'status' => $status,
+            ]
+        );
     }
 }
-
-
-
-
-
-
-
-
-
-
-

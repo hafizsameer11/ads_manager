@@ -36,8 +36,8 @@
                         <div class="form-group">
                             <label for="amount">Amount</label>
                             <input type="number" id="amount" name="amount" class="form-control" 
-                                   step="0.01" min="10" required>
-                            <small class="text-muted">Minimum: $10.00</small>
+                                   step="0.01" min="{{ $minimumDeposit ?? 10 }}" max="{{ $maximumDeposit ?? 50000 }}" required>
+                            <small class="text-muted">Minimum: ${{ number_format($minimumDeposit ?? 10, 2) }} | Maximum: ${{ number_format($maximumDeposit ?? 50000, 2) }}</small>
                         </div>
                     </div>
                     <div class="col-md-4">
@@ -206,8 +206,10 @@
                     if (automaticGateways.includes(paymentMethod)) {
                         e.preventDefault();
                         const amount = document.getElementById('amount').value;
-                        if (!amount || parseFloat(amount) < 10) {
-                            alert('Please enter a valid amount (minimum $10.00)');
+                        const minAmount = {{ $minimumDeposit ?? 10 }};
+                        const maxAmount = {{ $maximumDeposit ?? 50000 }};
+                        if (!amount || parseFloat(amount) < minAmount || parseFloat(amount) > maxAmount) {
+                            alert('Please enter a valid amount (minimum $' + minAmount.toFixed(2) + ', maximum $' + maxAmount.toFixed(2) + ')');
                             return;
                         }
                         

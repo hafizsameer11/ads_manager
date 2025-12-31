@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Dashboard\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Transaction;
 use App\Models\Advertiser;
+use App\Models\Notification;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Auth;
 use App\Mail\UserApprovedMail;
 
 class DepositsController extends Controller
@@ -25,6 +27,18 @@ class DepositsController extends Controller
      */
     public function index(Request $request)
     {
+        // Mark all payment category notifications as read when visiting this page
+        if (Auth::check() && Auth::user()->isAdmin()) {
+            Notification::where('notifiable_type', \App\Models\User::class)
+                ->where('notifiable_id', Auth::id())
+                ->where('category', 'payment')
+                ->unread()
+                ->update([
+                    'is_read' => true,
+                    'read_at' => now(),
+                ]);
+        }
+        
         $query = Transaction::where('type', 'deposit')
             ->with('transactionable.user');
         
@@ -93,10 +107,11 @@ class DepositsController extends Controller
                     $transaction->update(['notes' => $request->notes]);
                 }
                 
-                // Send notification
-                $this->notificationService->create(
+                // Send notification to advertiser
+                \App\Services\NotificationService::notifyUser(
                     $advertiser->user,
                     'deposit_approved',
+                    'payment',
                     'Deposit Approved',
                     "Your deposit of $" . number_format($transaction->amount, 2) . " has been approved and added to your balance.",
                     ['transaction_id' => $transaction->id, 'amount' => $transaction->amount]
@@ -126,12 +141,13 @@ class DepositsController extends Controller
             // Update transaction status
             $transaction->markAsFailed($request->rejection_reason);
             
-            // Send notification
+            // Send notification to advertiser
             $advertiser = $transaction->transactionable;
             if ($advertiser instanceof Advertiser) {
-                $this->notificationService->create(
+                \App\Services\NotificationService::notifyUser(
                     $advertiser->user,
                     'deposit_rejected',
+                    'payment',
                     'Deposit Rejected',
                     "Your deposit of $" . number_format($transaction->amount, 2) . " has been rejected. Reason: " . $request->rejection_reason,
                     ['transaction_id' => $transaction->id, 'amount' => $transaction->amount, 'reason' => $request->rejection_reason]

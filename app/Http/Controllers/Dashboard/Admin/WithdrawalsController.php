@@ -5,19 +5,14 @@ namespace App\Http\Controllers\Dashboard\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Withdrawal;
 use App\Models\Transaction;
+use App\Models\Notification;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class WithdrawalsController extends Controller
 {
-    protected $notificationService;
-
-    public function __construct(NotificationService $notificationService)
-    {
-        $this->notificationService = $notificationService;
-    }
-
     /**
      * Display the withdrawals management page.
      *
@@ -25,6 +20,18 @@ class WithdrawalsController extends Controller
      */
     public function index(Request $request)
     {
+        // Mark all withdrawal category notifications as read when visiting this page
+        if (Auth::check() && Auth::user()->isAdmin()) {
+            Notification::where('notifiable_type', \App\Models\User::class)
+                ->where('notifiable_id', Auth::id())
+                ->where('category', 'withdrawal')
+                ->unread()
+                ->update([
+                    'is_read' => true,
+                    'read_at' => now(),
+                ]);
+        }
+        
         $query = Withdrawal::with(['publisher.user']);
         
         // Filter by status
@@ -105,7 +112,7 @@ class WithdrawalsController extends Controller
         
         // Send notification to publisher
         if ($withdrawal->publisher && $withdrawal->publisher->user) {
-            $this->notificationService->notifyWithdrawalProcessing(
+            NotificationService::notifyWithdrawalProcessing(
                 $withdrawal->publisher->user,
                 $withdrawal->id,
                 $withdrawal->amount,
@@ -165,11 +172,12 @@ class WithdrawalsController extends Controller
         
         // Send notification to publisher
         if ($withdrawal->publisher && $withdrawal->publisher->user) {
-            $this->notificationService->notifyWithdrawalProcessing(
+            NotificationService::notifyWithdrawalProcessing(
                 $withdrawal->publisher->user,
                 $withdrawal->id,
                 $withdrawal->amount,
-                'rejected'
+                'rejected',
+                $request->rejection_reason
             );
         }
 
@@ -214,11 +222,11 @@ class WithdrawalsController extends Controller
         
         // Send notification to publisher
         if ($withdrawal->publisher && $withdrawal->publisher->user) {
-            $this->notificationService->notifyWithdrawalProcessing(
+            NotificationService::notifyWithdrawalProcessing(
                 $withdrawal->publisher->user,
                 $withdrawal->id,
                 $withdrawal->amount,
-                'processing'
+                'processed'
             );
         }
 

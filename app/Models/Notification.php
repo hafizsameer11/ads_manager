@@ -14,6 +14,7 @@ class Notification extends Model
         'notifiable_type',
         'notifiable_id',
         'type',
+        'category',
         'title',
         'message',
         'data',
@@ -89,5 +90,29 @@ class Notification extends Model
     public function scopeRead($query)
     {
         return $query->where('is_read', true);
+    }
+
+    /**
+     * Scope to filter by category.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $category
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeCategory($query, string $category)
+    {
+        return $query->where('category', $category);
+    }
+
+    /**
+     * Scope to get recent notifications.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  int  $limit
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeRecent($query, int $limit = 10)
+    {
+        return $query->orderBy('created_at', 'desc')->limit($limit);
     }
 }
