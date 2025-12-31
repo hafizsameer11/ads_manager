@@ -25,11 +25,16 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Copy composer files first to leverage Docker cache
 COPY composer.json composer.lock* ./
 
-# Install PHP deps (vendor). Use --no-dev for production builds.
-RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-progress --no-suggest --no-dev || composer install --no-interaction --prefer-dist --optimize-autoloader
+# Install PHP deps without running composer scripts (artisan not present yet).
+# This speeds up rebuilds while avoiding post-autoload scripts that expect the app files.
+RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-progress --no-suggest --no-dev --no-scripts || \
+    composer install --no-interaction --prefer-dist --optimize-autoloader --no-suggest --no-dev --no-scripts
 
-# Copy the application code
+# Copy the application code (now `artisan` and app files are present)
 COPY . .
+
+# Run Composer scripts and Laravel package discovery now that the app is copied
+RUN composer dump-autoload --optimize && php artisan package:discover --ansi || true
 
 # If project has frontend tooling, build assets (optional)
 RUN if [ -f package.json ]; then npm ci && npm run build || true; fi
