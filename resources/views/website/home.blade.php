@@ -13,8 +13,8 @@
                     <h1>Smart Network, Powerful Solutions</h1>
                     <p class="subtitle">See what is possible with our platform, re-discover potential</p>
                     <p>
-                        We are simply the best paying advertising network specialized in online advertising on the Internet. 
-                        We guarantee you that no other ad network will pay better than us! Just register and see for yourself. 
+                        We are simply the best paying advertising network specialized in online advertising on the Internet.
+                        We guarantee you that no other ad network will pay better than us! Just register and see for yourself.
                         Prepare to be astonished!
                     </p>
                 </div>
@@ -69,11 +69,11 @@
     <!-- Features Section -->
     <section class="section">
         <div class="container">
-            <h2 class="section-title">Why Choose Us</h2>
+            <h2 class="section-title">Why Choose Ussss</h2>
             <p class="section-subtitle">
                 Discover the advantages that make us the preferred choice for advertisers and publishers
             </p>
-            
+
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-top: 50px;">
                 <div style="padding: 30px; background: var(--bg-light); border-radius: 12px; text-align: center;">
                     <div style="width: 60px; height: 60px; margin: 0 auto 20px; background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">✓</div>
