@@ -46,7 +46,8 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 # Serve Laravel's public directory as Apache document root
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/*.conf \
-    && sed -ri 's!/var/www/!/var/www/html/!g' /etc/apache2/apache2.conf
+    && sed -ri 's!/var/www/!/var/www/html/!g' /etc/apache2/apache2.conf \
+    && sed -ri 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf || true
 
 EXPOSE 80
 
