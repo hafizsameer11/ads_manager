@@ -37,7 +37,7 @@ class CreateAdminUser extends Command
                 'name' => $name,
                 'password' => Hash::make($password),
                 'role' => 'admin',
-                'is_active' => true,
+                'is_active' => 1, // 1 = Approved (admins are approved by default)
             ]
         );
 
@@ -49,13 +49,14 @@ class CreateAdminUser extends Command
                 'name' => $name,
                 'password' => Hash::make($password),
                 'role' => 'admin',
-                'is_active' => true,
+                'is_active' => 1, // 1 = Approved (admins are approved by default)
             ]);
         }
 
+        $statusText = $user->is_active == 1 ? 'Approved' : ($user->is_active == 0 ? 'Rejected' : ($user->is_active == 2 ? 'Pending' : 'Unknown'));
         $this->table(
-            ['ID', 'Name', 'Email', 'Role', 'Active'],
-            [[$user->id, $user->name, $user->email, $user->role, $user->is_active ? 'Yes' : 'No']]
+            ['ID', 'Name', 'Email', 'Role', 'Status'],
+            [[$user->id, $user->name, $user->email, $user->role, $statusText]]
         );
 
         return Command::SUCCESS;

@@ -172,9 +172,22 @@
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        display: inline-flex;
+        display: inline-block;
         align-items: center;
         gap: 4px;
+        position: relative;
+        vertical-align: middle;
+    }
+
+    .table td {
+        position: relative;
+    }
+
+    .table td .badge {
+        display: inline-block;
+        position: relative;
+        float: none;
+        clear: both;
     }
 
     .badge-success {
@@ -275,7 +288,7 @@
             </a>
         </div>
         <div class="card-body">
-            @if(session('success'))
+            @if(session('success') && (str_contains(session('success'), 'Manual payment account') || str_contains(session('success'), 'payment account')))
                 <div class="success-alert">
                     <div class="alert-icon">
                         <i class="fas fa-check-circle"></i>
@@ -299,7 +312,6 @@
                             <th>Account Number</th>
                             <th>Account Type</th>
                             <th>Status</th>
-                            <th>Sort Order</th>
                             <th>Created</th>
                             <th>Actions</th>
                         </tr>
@@ -326,7 +338,6 @@
                                         <span class="badge badge-danger">Disabled</span>
                                     @endif
                                 </td>
-                                <td>{{ $account->sort_order }}</td>
                                 <td>{{ $account->created_at->format('M d, Y') }}</td>
                                 <td>
                                     <div class="action-buttons">
@@ -351,7 +362,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-center text-muted">No manual payment accounts found. <a href="{{ route('dashboard.admin.manual-payment-accounts.create') }}">Create one now</a></td>
+                                <td colspan="7" class="text-center text-muted">No manual payment accounts found. <a href="{{ route('dashboard.admin.manual-payment-accounts.create') }}">Create one now</a></td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -361,6 +372,88 @@
             <!-- Pagination -->
             <div class="mt-3">
                 {{ $accounts->links() }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Allowed Account Types Table -->
+    <div class="card" style="margin-top: 30px;">
+        <div class="card-header">
+            <h3 class="card-title">Allowed Account Types</h3>
+            <a href="{{ route('dashboard.admin.allowed-account-types.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add New Account Type
+            </a>
+        </div>
+        <div class="card-body">
+            @if(session('success') && (str_contains(session('success'), 'Account type') || str_contains(session('success'), 'account type')))
+                <div class="success-alert">
+                    <div class="alert-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="alert-content">
+                        <strong><i class="fas fa-check"></i> Success!</strong>
+                        <p style="margin: 4px 0 0 0;">{{ session('success') }}</p>
+                    </div>
+                    <button type="button" class="close" onclick="this.parentElement.style.display='none'">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            @endif
+
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($accountTypes as $accountType)
+                            <tr>
+                                <td>#{{ $accountType->id }}</td>
+                                <td><strong>{{ $accountType->name }}</strong></td>
+                                <td>{{ $accountType->description ?? '-' }}</td>
+                                <td>
+                                    @if($accountType->is_enabled)
+                                        <span class="badge badge-success">Enabled</span>
+                                    @else
+                                        <span class="badge badge-secondary">Disabled</span>
+                                    @endif
+                                </td>
+                                <td>{{ $accountType->created_at->format('M d, Y') }}</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="{{ route('dashboard.admin.allowed-account-types.edit', $accountType->id) }}" class="btn btn-sm btn-primary" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form action="{{ route('dashboard.admin.allowed-account-types.toggle-status', $accountType->id) }}" method="POST" class="action-form">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm {{ $accountType->is_enabled ? 'btn-warning' : 'btn-success' }}" title="{{ $accountType->is_enabled ? 'Disable' : 'Enable' }}">
+                                                <i class="fas fa-{{ $accountType->is_enabled ? 'ban' : 'check' }}"></i>
+                                            </button>
+                                        </form>
+                                        <form action="{{ route('dashboard.admin.allowed-account-types.destroy', $accountType->id) }}" method="POST" class="action-form" onsubmit="return confirm('Are you sure you want to delete this account type?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-danger" title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">No account types found. <a href="{{ route('dashboard.admin.allowed-account-types.create') }}">Create one</a></td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

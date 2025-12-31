@@ -92,3 +92,4 @@ class CoinPaymentsController extends Controller
     }
 }
 
+

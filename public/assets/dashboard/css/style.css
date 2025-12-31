@@ -1095,6 +1095,128 @@ body {
 .p-3 { padding: 1.5rem; }
 .p-4 { padding: 2rem; }
 
+/* ===== Admin Dashboard: Bootstrap 5 Badge Visibility Override ===== */
+/* Force Bootstrap 5 badges to be visible in admin dashboard */
+/* This overrides any admin theme CSS that might hide .badge elements */
+/* Note: This does NOT affect header notification badges (which use position: absolute) */
+.dashboard-main .badge,
+.dashboard-content .card .badge,
+.dashboard-content .table .badge,
+.dashboard-content .card-body .badge,
+.dashboard-content .card-header .badge {
+    display: inline-block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    padding: 0.35em 0.65em !important;
+    font-size: 0.75em !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    vertical-align: baseline !important;
+    border-radius: 0.375rem !important;
+    position: static !important;
+    top: auto !important;
+    right: auto !important;
+    min-width: auto !important;
+}
+
+/* Bootstrap 5 Badge Color Classes - Force Visibility */
+/* Only apply to badges in main content area, not header notifications */
+.dashboard-main .badge.bg-success,
+.dashboard-content .card .badge.bg-success,
+.dashboard-content .table .badge.bg-success,
+.dashboard-content .card-body .badge.bg-success,
+.dashboard-main .badge-success,
+.dashboard-content .card .badge-success,
+.dashboard-content .table .badge-success,
+.dashboard-content .card-body .badge-success {
+    background-color: #198754 !important;
+    color: #ffffff !important;
+}
+
+.dashboard-main .badge.bg-danger,
+.dashboard-content .card .badge.bg-danger,
+.dashboard-content .table .badge.bg-danger,
+.dashboard-content .card-body .badge.bg-danger,
+.dashboard-main .badge-danger,
+.dashboard-content .card .badge-danger,
+.dashboard-content .table .badge-danger,
+.dashboard-content .card-body .badge-danger {
+    background-color: #dc3545 !important;
+    color: #ffffff !important;
+}
+
+.dashboard-main .badge.bg-warning,
+.dashboard-content .card .badge.bg-warning,
+.dashboard-content .table .badge.bg-warning,
+.dashboard-content .card-body .badge.bg-warning,
+.dashboard-main .badge-warning,
+.dashboard-content .card .badge-warning,
+.dashboard-content .table .badge-warning,
+.dashboard-content .card-body .badge-warning {
+    background-color: #ffc107 !important;
+    color: #000000 !important;
+}
+
+.dashboard-main .badge.bg-info,
+.dashboard-content .card .badge.bg-info,
+.dashboard-content .table .badge.bg-info,
+.dashboard-content .card-body .badge.bg-info,
+.dashboard-main .badge-info,
+.dashboard-content .card .badge-info,
+.dashboard-content .table .badge-info,
+.dashboard-content .card-body .badge-info {
+    background-color: #0dcaf0 !important;
+    color: #000000 !important;
+}
+
+.dashboard-main .badge.bg-secondary,
+.dashboard-content .card .badge.bg-secondary,
+.dashboard-content .table .badge.bg-secondary,
+.dashboard-content .card-body .badge.bg-secondary,
+.dashboard-main .badge-secondary,
+.dashboard-content .card .badge-secondary,
+.dashboard-content .table .badge-secondary,
+.dashboard-content .card-body .badge-secondary {
+    background-color: #6c757d !important;
+    color: #ffffff !important;
+}
+
+.dashboard-main .badge.bg-primary,
+.dashboard-content .card .badge.bg-primary,
+.dashboard-content .table .badge.bg-primary,
+.dashboard-content .card-body .badge.bg-primary,
+.dashboard-main .badge-primary,
+.dashboard-content .card .badge-primary,
+.dashboard-content .table .badge-primary,
+.dashboard-content .card-body .badge-primary {
+    background-color: #0d6efd !important;
+    color: #ffffff !important;
+}
+
+/* Override any inline styles that might hide badges (only in main content, not header) */
+.dashboard-main .badge[style*="display: none"],
+.dashboard-content .card .badge[style*="display: none"],
+.dashboard-content .table .badge[style*="display: none"],
+.dashboard-content .card-body .badge[style*="display: none"] {
+    display: inline-block !important;
+}
+
+.dashboard-main .badge[style*="visibility: hidden"],
+.dashboard-content .card .badge[style*="visibility: hidden"],
+.dashboard-content .table .badge[style*="visibility: hidden"],
+.dashboard-content .card-body .badge[style*="visibility: hidden"] {
+    visibility: visible !important;
+}
+
+.dashboard-main .badge[style*="opacity: 0"],
+.dashboard-content .card .badge[style*="opacity: 0"],
+.dashboard-content .table .badge[style*="opacity: 0"],
+.dashboard-content .card-body .badge[style*="opacity: 0"] {
+    opacity: 1 !important;
+}
+
 
 
 

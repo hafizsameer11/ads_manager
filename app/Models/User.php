@@ -49,7 +49,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
-        'is_active' => 'boolean',
+        'is_active' => 'int', // 1 = Approved, 0 = Rejected, 2 = Pending
         'last_login_at' => 'datetime',
     ];
 

@@ -98,11 +98,18 @@ class LoginController extends Controller
 
             $user = Auth::user();
 
-            // Check if user is active
-            if (!$user->is_active) {
+            // Check if user is approved (only is_active == 1 can login)
+            if ($user->is_active != 1) {
                 Auth::logout();
+                if ($user->is_active == 0) {
+                    $message = 'Your account has been rejected. Please contact support.';
+                } elseif ($user->is_active == 2) {
+                    $message = 'Your account is pending approval. Please wait for admin approval.';
+                } else {
+                    $message = 'Your account is not active. Please contact support.';
+                }
                 return back()->withErrors([
-                    'login' => 'Your account has been deactivated. Please contact support.',
+                    'login' => $message,
                 ]);
             }
 

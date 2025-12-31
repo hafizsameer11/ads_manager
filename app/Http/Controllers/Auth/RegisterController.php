@@ -67,7 +67,7 @@ class RegisterController extends Controller
                 'role' => $request->role,
                 'referral_code' => User::generateReferralCode(),
                 'referred_by' => $referrer?->id,
-                'is_active' => true,
+                'is_active' => 2, // 2 = Pending (default for new users)
             ]);
 
             // Create role-specific profile

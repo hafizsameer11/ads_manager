@@ -55,13 +55,13 @@
                                     <option value="stripe">Stripe (Automatic)</option>
                                 @endif
                                 @if($faucetpayEnabled)
-                                    <option value="faucetpay">FaucetPay</option>
+                                <option value="faucetpay">FaucetPay</option>
                                 @endif
                                 @if($bankSwiftEnabled)
-                                    <option value="bank_swift">Bank SWIFT</option>
+                                <option value="bank_swift">Bank SWIFT</option>
                                 @endif
                                 @if($wiseEnabled)
-                                    <option value="wise">Wise</option>
+                                <option value="wise">Wise</option>
                                 @endif
                                 @if($manualPaymentAccounts->count() > 0)
                                     <option value="manual">Manual Payment</option>

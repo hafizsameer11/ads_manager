@@ -130,10 +130,14 @@
                     <div class="form-group">
                         <label>Account Status</label>
                         <div>
-                            @if($user->is_active)
-                                <span class="badge badge-success">Active</span>
+                            @if($user->is_active == 1)
+                                <span class="badge badge-success">Approved</span>
+                            @elseif($user->is_active == 0)
+                                <span class="badge badge-danger">Rejected</span>
+                            @elseif($user->is_active == 2)
+                                <span class="badge badge-warning">Pending</span>
                             @else
-                                <span class="badge badge-danger">Inactive</span>
+                                <span class="badge badge-secondary">Unknown</span>
                             @endif
                         </div>
                     </div>

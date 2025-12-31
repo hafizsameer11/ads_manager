@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dashboard\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ManualPaymentAccount;
+use App\Models\AllowedAccountType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -17,8 +18,9 @@ class ManualPaymentAccountsController extends Controller
     public function index()
     {
         $accounts = ManualPaymentAccount::ordered()->paginate(20);
+        $accountTypes = AllowedAccountType::ordered()->get();
         
-        return view('dashboard.admin.manual-payment-accounts.index', compact('accounts'));
+        return view('dashboard.admin.manual-payment-accounts.index', compact('accounts', 'accountTypes'));
     }
 
     /**
@@ -44,7 +46,6 @@ class ManualPaymentAccountsController extends Controller
             'account_number' => 'required|string|max:255',
             'account_type' => 'required|string|max:255',
             'account_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'sort_order' => 'nullable|integer|min:0',
         ]);
 
         // Handle image upload
@@ -55,7 +56,6 @@ class ManualPaymentAccountsController extends Controller
 
         // Handle checkbox - if not present, it's false
         $validated['is_enabled'] = $request->has('is_enabled') ? true : false;
-        $validated['sort_order'] = $validated['sort_order'] ?? 0;
 
         ManualPaymentAccount::create($validated);
 
@@ -92,7 +92,6 @@ class ManualPaymentAccountsController extends Controller
             'account_number' => 'required|string|max:255',
             'account_type' => 'required|string|max:255',
             'account_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'sort_order' => 'nullable|integer|min:0',
         ]);
 
         // Handle image upload
@@ -111,7 +110,6 @@ class ManualPaymentAccountsController extends Controller
 
         // Handle checkbox - if not present, it's false
         $validated['is_enabled'] = $request->has('is_enabled') ? true : false;
-        $validated['sort_order'] = $validated['sort_order'] ?? 0;
 
         $account->update($validated);
 

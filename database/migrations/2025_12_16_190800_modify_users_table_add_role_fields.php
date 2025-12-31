@@ -15,7 +15,7 @@ return new class extends Migration
             $table->enum('role', ['admin', 'publisher', 'advertiser'])->default('advertiser')->after('email');
             $table->string('phone')->nullable()->after('name');
             $table->string('avatar')->nullable()->after('phone');
-            $table->boolean('is_active')->default(true)->after('role');
+            $table->tinyInteger('is_active')->default(2)->after('role'); // 1 = Approved, 0 = Rejected, 2 = Pending
             $table->timestamp('last_login_at')->nullable()->after('remember_token');
             $table->string('referral_code')->unique()->nullable()->after('is_active');
             $table->unsignedBigInteger('referred_by')->nullable()->after('referral_code');

@@ -584,8 +584,8 @@
                                     <div class="action-buttons">
                                         @if($withdrawal->status === 'pending')
                                             <button type="button" class="btn btn-sm btn-success" title="Approve" onclick="showApproveModal({{ $withdrawal->id }}, '{{ number_format($withdrawal->amount, 2) }}', '{{ $withdrawal->publisher->user->name ?? 'N/A' }}', {{ ($withdrawal->account_type || $withdrawal->account_name || $withdrawal->account_number) ? 'true' : 'false' }}, '{{ $withdrawal->account_type ?? '' }}', '{{ $withdrawal->account_name ?? '' }}', '{{ $withdrawal->account_number ?? '' }}')">
-                                                <i class="fas fa-check"></i>
-                                            </button>
+                                                    <i class="fas fa-check"></i>
+                                                </button>
                                             <button type="button" class="btn btn-sm btn-danger" title="Reject" onclick="showRejectModal({{ $withdrawal->id }}, '{{ number_format($withdrawal->amount, 2) }}')">
                                                 <i class="fas fa-times"></i>
                                             </button>

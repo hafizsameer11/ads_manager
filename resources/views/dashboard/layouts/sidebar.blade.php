@@ -76,16 +76,10 @@
                         <span>Contact Messages</span>
                     </a>
                 </li>
-                <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.manual-payment-accounts') ? 'active' : '' }}">
+                <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.manual-payment-accounts') || str_contains($currentRoute, 'dashboard.admin.allowed-account-types') ? 'active' : '' }}">
                     <a href="{{ route('dashboard.admin.manual-payment-accounts.index') }}" class="nav-link">
                         <i class="fas fa-credit-card"></i>
                         <span>Payment Accounts</span>
-                    </a>
-                </li>
-                <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.allowed-account-types') ? 'active' : '' }}">
-                    <a href="{{ route('dashboard.admin.allowed-account-types.index') }}" class="nav-link">
-                        <i class="fas fa-list-alt"></i>
-                        <span>Allowed Account Types</span>
                     </a>
                 </li>
                 <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.settings') ? 'active' : '' }}">

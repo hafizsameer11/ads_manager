@@ -178,14 +178,6 @@
                             <input type="text" id="account_number" name="account_number" class="form-control" value="{{ old('account_number', $account->account_number) }}" required placeholder="Enter account number">
                         </div>
                     </div>
-
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="sort_order" class="form-label">Sort Order</label>
-                            <input type="number" id="sort_order" name="sort_order" class="form-control" value="{{ old('sort_order', $account->sort_order) }}" min="0" placeholder="0">
-                            <small class="text-muted">Lower numbers appear first</small>
-                        </div>
-                    </div>
                 </div>
 
                 <div class="form-group">

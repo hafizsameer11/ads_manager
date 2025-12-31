@@ -2,7 +2,95 @@
 
 @section('title', 'Settings - Admin Dashboard')
 
+@push('styles')
+<style>
+    /* Success Alert Styles */
+    .success-alert {
+        display: flex;
+        align-items: flex-start;
+        gap: 15px;
+        padding: 16px 20px;
+        border-left: 4px solid var(--success-color);
+        background-color: #f0fdf4;
+        border-radius: var(--border-radius);
+        margin-bottom: 24px;
+        position: relative;
+    }
+
+    .success-alert .alert-icon {
+        flex-shrink: 0;
+        font-size: 24px;
+        color: var(--success-color);
+        margin-top: 2px;
+    }
+
+    .success-alert .alert-content {
+        flex: 1;
+    }
+
+    .success-alert .alert-content strong {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--success-color);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .success-alert .alert-content p {
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .success-alert .close {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        font-size: 20px;
+        opacity: 0.6;
+        cursor: pointer;
+    }
+
+    .success-alert .close:hover {
+        opacity: 1;
+    }
+</style>
+@endpush
+
 @section('content')
+    @if(session('success'))
+        <div class="success-alert">
+            <div class="alert-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="alert-content">
+                <strong><i class="fas fa-check"></i> Success!</strong>
+                <p style="margin: 4px 0 0 0;">{{ session('success') }}</p>
+            </div>
+            <button type="button" class="close" onclick="this.parentElement.style.display='none'">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <div class="alert-icon">
+                <i class="fas fa-exclamation-circle"></i>
+            </div>
+            <div class="alert-content">
+                <strong><i class="fas fa-times-circle"></i> Error!</strong>
+                <ul class="mb-0 mt-2" style="list-style: none; padding-left: 0;">
+                    @foreach($errors->all() as $error)
+                        <li style="padding: 4px 0;"><i class="fas fa-chevron-right" style="font-size: 10px; margin-right: 8px;"></i>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    @endif
     <!-- Revenue Settings -->
     <div class="card">
         <div class="card-header">

@@ -20,9 +20,9 @@ class AdminUserSeeder extends Seeder
             [
                 'name' => 'admin',
                 'username' => 'admin123',
-                'password' => Hash::make('admin 123'),
+                'password' => Hash::make('admin123'),
                 'role' => 'admin',
-                'is_active' => true,
+                'is_active' => 1, // 1 = Approved (admins are approved by default)
                 'referral_code' => User::generateReferralCode(),
             ]
         );
@@ -34,7 +34,7 @@ class AdminUserSeeder extends Seeder
                 'username' => 'admin123',
                 'password' => Hash::make('admin 123'),
                 'role' => 'admin',
-                'is_active' => true,
+                'is_active' => 1, // 1 = Approved (admins are approved by default)
             ]);
         }
 

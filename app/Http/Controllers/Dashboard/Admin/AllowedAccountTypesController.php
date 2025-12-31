@@ -35,16 +35,15 @@ class AllowedAccountTypesController extends Controller
             'name' => 'required|string|max:255|unique:allowed_account_types,name',
             'description' => 'nullable|string|max:500',
             'is_enabled' => 'nullable|boolean',
-            'sort_order' => 'nullable|integer|min:0',
         ]);
 
-        $data = $request->only(['name', 'description', 'sort_order']);
+        $data = $request->only(['name', 'description']);
         $data['slug'] = Str::slug($request->name);
         $data['is_enabled'] = $request->has('is_enabled') ? true : false;
 
         AllowedAccountType::create($data);
 
-        return redirect()->route('dashboard.admin.allowed-account-types.index')
+        return redirect()->route('dashboard.admin.manual-payment-accounts.index')
             ->with('success', 'Account type created successfully.');
     }
 
@@ -65,16 +64,15 @@ class AllowedAccountTypesController extends Controller
             'name' => 'required|string|max:255|unique:allowed_account_types,name,' . $allowedAccountType->id,
             'description' => 'nullable|string|max:500',
             'is_enabled' => 'nullable|boolean',
-            'sort_order' => 'nullable|integer|min:0',
         ]);
 
-        $data = $request->only(['name', 'description', 'sort_order']);
+        $data = $request->only(['name', 'description']);
         $data['slug'] = Str::slug($request->name);
         $data['is_enabled'] = $request->has('is_enabled') ? true : false;
 
         $allowedAccountType->update($data);
 
-        return redirect()->route('dashboard.admin.allowed-account-types.index')
+        return redirect()->route('dashboard.admin.manual-payment-accounts.index')
             ->with('success', 'Account type updated successfully.');
     }
 
@@ -85,7 +83,7 @@ class AllowedAccountTypesController extends Controller
     {
         $allowedAccountType->delete();
 
-        return redirect()->route('dashboard.admin.allowed-account-types.index')
+        return redirect()->route('dashboard.admin.manual-payment-accounts.index')
             ->with('success', 'Account type deleted successfully.');
     }
 

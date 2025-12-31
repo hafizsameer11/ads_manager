@@ -34,12 +34,14 @@ class UsersController extends Controller
             $query->where('role', $request->role);
         }
         
-        // Filter by status
+        // Filter by account status: 1 = Approved, 0 = Rejected, 2 = Pending
         if ($request->filled('status')) {
-            if ($request->status === 'active') {
-                $query->where('is_active', true);
-            } elseif ($request->status === 'inactive') {
-                $query->where('is_active', false);
+            if ($request->status === 'approved') {
+                $query->where('is_active', 1);
+            } elseif ($request->status === 'rejected') {
+                $query->where('is_active', 0);
+            } elseif ($request->status === 'pending') {
+                $query->where('is_active', 2);
             }
         }
         
@@ -54,13 +56,18 @@ class UsersController extends Controller
         
         $users = $query->latest()->paginate(20);
         
+        // Ensure relationships are loaded
+        $users->load(['publisher', 'advertiser']);
+        
         // Stats (excluding admins from total count)
         $stats = [
             'total' => User::where('role', '!=', 'admin')->count(),
             'publishers' => User::where('role', 'publisher')->count(),
             'advertisers' => User::where('role', 'advertiser')->count(),
             'admins' => User::where('role', 'admin')->count(),
-            'active' => User::where('role', '!=', 'admin')->where('is_active', true)->count(),
+            'approved' => User::where('role', '!=', 'admin')->where('is_active', 1)->count(),
+            'rejected' => User::where('role', '!=', 'admin')->where('is_active', 0)->count(),
+            'pending' => User::where('role', '!=', 'admin')->where('is_active', 2)->count(),
         ];
         
         return view('dashboard.admin.users', compact('users', 'stats'));
@@ -143,7 +150,8 @@ class UsersController extends Controller
     }
 
     /**
-     * Toggle user active status.
+     * Toggle user account status.
+     * Cycles through: Pending (2) -> Approved (1) -> Rejected (0) -> Approved (1)
      *
      * @param  int  $id
      * @return \Illuminate\Http\RedirectResponse
@@ -152,15 +160,29 @@ class UsersController extends Controller
     {
         $user = User::findOrFail($id);
         
-        // Prevent deactivating yourself
+        // Prevent changing your own status
         if ($user->id === auth()->id()) {
-            return back()->withErrors(['error' => 'You cannot deactivate your own account.']);
+            return back()->withErrors(['error' => 'You cannot change your own account status.']);
         }
 
-        $user->update(['is_active' => !$user->is_active]);
+        // Cycle through statuses: 2 (Pending) -> 1 (Approved) -> 0 (Rejected) -> 1 (Approved)
+        if ($user->is_active == 2) {
+            // Pending -> Approved
+            $newStatus = 1;
+            $statusText = 'approved';
+        } elseif ($user->is_active == 1) {
+            // Approved -> Rejected
+            $newStatus = 0;
+            $statusText = 'rejected';
+        } else {
+            // Rejected -> Approved
+            $newStatus = 1;
+            $statusText = 'approved';
+        }
         
-        $status = $user->is_active ? 'activated' : 'deactivated';
-        return back()->with('success', "User {$status} successfully.");
+        $user->update(['is_active' => $newStatus]);
+        
+        return back()->with('success', "User {$statusText} successfully.");
     }
 
     /**

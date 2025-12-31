@@ -4,12 +4,12 @@
 
 @section('content')
     <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px;">
-        <a href="{{ route('dashboard.advertiser.analytics') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Back to Analytics
-        </a>
-        <a href="{{ route('dashboard.advertiser.analytics.geo') }}" class="btn btn-primary">
-            <i class="fas fa-globe"></i> Geo Analytics
-        </a>
+                <a href="{{ route('dashboard.advertiser.analytics') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Analytics
+                </a>
+                <a href="{{ route('dashboard.advertiser.analytics.geo') }}" class="btn btn-primary">
+                    <i class="fas fa-globe"></i> Geo Analytics
+                </a>
     </div>
 
     <!-- Filters -->

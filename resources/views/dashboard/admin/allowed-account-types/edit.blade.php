@@ -15,7 +15,7 @@
                 @csrf
                 @method('PUT')
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-12">
                         <div class="form-group">
                             <label for="name">Account Type Name <span class="text-danger">*</span></label>
                             <input type="text" id="name" name="name" class="form-control" value="{{ old('name', $allowedAccountType->name) }}" required placeholder="e.g., JazzCash, EasyPaisa, Bank">
@@ -23,13 +23,6 @@
                             @error('name')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="sort_order">Sort Order</label>
-                            <input type="number" id="sort_order" name="sort_order" class="form-control" value="{{ old('sort_order', $allowedAccountType->sort_order) }}" min="0">
-                            <small class="text-muted">Lower numbers appear first</small>
                         </div>
                     </div>
                     <div class="col-md-12">
