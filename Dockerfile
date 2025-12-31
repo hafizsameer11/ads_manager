@@ -1,23 +1,24 @@
 # Dockerfile for Laravel application (PHP-FPM)
 # Builds a PHP-FPM container with Composer and optional Node (for asset builds).
 
-FROM php:8.2-fpm
+FROM php:8.2-apache
 
 ARG APP_ENV=production
 ENV APP_ENV=${APP_ENV}
 
 WORKDIR /var/www/html
 
-# Install system dependencies, PHP extensions and Node/npm
+# Install system dependencies, PHP extensions and Node/npm, enable Apache rewrite
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-       git curl unzip libzip-dev libonig-dev libpng-dev libjpeg-dev libfreetype6-dev libicu-dev libxml2-dev \
-       zlib1g-dev nodejs npm ca-certificates \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j"$(nproc)" pdo pdo_mysql mbstring exif pcntl bcmath gd intl xml zip \
-    && pecl install redis || true \
-    && docker-php-ext-enable redis || true \
-    && rm -rf /var/lib/apt/lists/*
+     && apt-get install -y --no-install-recommends \
+         git curl unzip libzip-dev libonig-dev libpng-dev libjpeg-dev libfreetype6-dev libicu-dev libxml2-dev \
+         zlib1g-dev nodejs npm ca-certificates \
+     && docker-php-ext-configure gd --with-freetype --with-jpeg \
+     && docker-php-ext-install -j"$(nproc)" pdo pdo_mysql mbstring exif pcntl bcmath gd intl xml zip \
+     && pecl install redis || true \
+     && docker-php-ext-enable redis || true \
+     && a2enmod rewrite \
+     && rm -rf /var/lib/apt/lists/*
 
 # Install Composer from the official Composer image
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -42,7 +43,12 @@ RUN if [ -f package.json ]; then npm ci && npm run build || true; fi
 # Ensure storage & cache dirs are writable
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache || true
 
-EXPOSE 9000
+# Serve Laravel's public directory as Apache document root
+ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+RUN sed -ri 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/*.conf \
+    && sed -ri 's!/var/www/!/var/www/html/!g' /etc/apache2/apache2.conf
 
-# Default command: run PHP-FPM
-CMD ["php-fpm"]
+EXPOSE 80
+
+# Default command: run Apache in foreground
+CMD ["apache2-foreground"]
