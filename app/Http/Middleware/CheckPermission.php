@@ -14,19 +14,14 @@ class CheckPermission
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      * @param  string  ...$permissions
      */
-    public function handle(Request $request, Closure $next, ...$permissions): Response
+    public function handle($request, \Closure $next, ...$permissions)
     {
-        if (!auth()->check()) {
-            return redirect()->route('login');
-        }
-
         $user = auth()->user();
 
-        // Check if user has any of the required permissions
-        if (!$user->hasAnyPermission($permissions)) {
-            abort(403, 'You do not have permission to access this resource.');
+        if ($user && $user->role === 'admin') {
+            return $next($request);
         }
 
-        return $next($request);
+        abort(403, 'You do not have permission to access this resource.');
     }
 }
