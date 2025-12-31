@@ -69,7 +69,7 @@
     <!-- Features Section -->
     <section class="section">
         <div class="container">
-            <h2 class="section-title">Why Choose Ussss</h2>
+            <h2 class="section-title">Why Choose Us</h2>
             <p class="section-subtitle">
                 Discover the advantages that make us the preferred choice for advertisers and publishers
             </p>
