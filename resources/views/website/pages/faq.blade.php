@@ -6,13 +6,13 @@
 
 @section('content')
     <section class="section" style="padding-top: 100px;">
-        <div class="container">
+        <div class="container" style="width: 90%; max-width: none; margin: 0 auto;">
             <h1 class="section-title">Frequently Asked Questions</h1>
             <p class="section-subtitle">
                 Find answers to the most common questions about our platform
             </p>
 
-            <div style="max-width: 800px; margin: 0 auto;">
+            <div style="width: 100%;">
                 <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: var(--shadow-md); margin-bottom: 20px;">
                     <h2 style="font-size: 20px; margin-bottom: 15px; color: var(--text-dark);">How do I get started as an advertiser?</h2>
                     <p style="color: var(--text-light); line-height: 1.8;">

@@ -6,13 +6,13 @@
 
 @section('content')
     <section class="section" style="padding-top: 100px;">
-        <div class="container">
+        <div class="container" style="width: 90%; max-width: none; margin: 0 auto;">
             <h1 class="section-title">For Publishers</h1>
             <p class="section-subtitle">
                 Maximize your revenue and grow your business with our publisher-friendly platform
             </p>
 
-            <div style="max-width: 900px; margin: 0 auto;">
+            <div style="width: 100%;">
                 <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: var(--shadow-md); margin-bottom: 30px;">
                     <h2 style="font-size: 28px; margin-bottom: 20px; color: var(--text-dark);">Why Publish With Us?</h2>
                     <ul style="list-style: none; padding: 0;">

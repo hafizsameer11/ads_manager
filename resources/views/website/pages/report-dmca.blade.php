@@ -6,13 +6,13 @@
 
 @section('content')
     <section class="section" style="padding-top: 100px;">
-        <div class="container">
+        <div class="container" style="width: 90%; max-width: none; margin: 0 auto;">
             <h1 class="section-title">Report DMCA</h1>
             <p class="section-subtitle">
                 Submit a DMCA takedown notice for copyright infringement
             </p>
 
-            <div style="max-width: 800px; margin: 0 auto;">
+            <div style="width: 100%;">
                 <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: var(--shadow-md);">
                     <p style="color: var(--text-light); line-height: 1.8; margin-bottom: 30px;">
                         If you believe that content on our platform infringes your copyright, please submit a DMCA takedown notice. 
