@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dashboard\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Models\SmtpSetting;
 use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -60,7 +61,10 @@ class SettingsController extends Controller
             'referral_deposit_bonus_rate' => Setting::get('referral_deposit_bonus_rate', 5.00),
         ];
         
-        return view('dashboard.admin.settings', compact('settings'));
+        // Load SMTP settings
+        $smtpSettings = SmtpSetting::getDefault();
+        
+        return view('dashboard.admin.settings', compact('settings', 'smtpSettings'));
     }
 
     /**
@@ -276,6 +280,62 @@ class SettingsController extends Controller
                 ], Auth::user());
                 
                 return back()->with('success', 'Referral program settings updated successfully.');
+                
+            case 'smtp':
+                $request->validate([
+                    'mailer' => 'required|string|in:smtp,sendmail,mailgun,ses,postmark,log,array',
+                    'host' => 'nullable|string|max:255',
+                    'port' => 'nullable|integer|min:1|max:65535',
+                    'encryption' => 'nullable|string|in:tls,ssl',
+                    'username' => 'nullable|string|max:255',
+                    'password' => 'nullable|string|max:255',
+                    'from_address' => 'nullable|email|max:255',
+                    'from_name' => 'nullable|string|max:255',
+                    'reply_to_address' => 'nullable|email|max:255',
+                    'reply_to_name' => 'nullable|string|max:255',
+                    'timeout' => 'nullable|integer|min:1',
+                    'local_domain' => 'nullable|string|max:255',
+                    'is_active' => 'nullable|boolean',
+                ]);
+                
+                // Get existing SMTP settings or create new
+                $smtpSetting = SmtpSetting::first();
+                
+                if (!$smtpSetting) {
+                    $smtpSetting = new SmtpSetting();
+                }
+                
+                // If activating this SMTP setting, deactivate all others
+                if ($request->has('is_active') && $request->is_active) {
+                    SmtpSetting::where('id', '!=', $smtpSetting->id ?? 0)->update(['is_active' => false]);
+                }
+                
+                $smtpSetting->mailer = $request->mailer;
+                $smtpSetting->host = $request->host;
+                $smtpSetting->port = $request->port ?? 587;
+                $smtpSetting->encryption = $request->encryption;
+                $smtpSetting->username = $request->username;
+                // Only update password if it's provided (not empty)
+                if ($request->filled('password')) {
+                    $smtpSetting->password = $request->password;
+                }
+                $smtpSetting->from_address = $request->from_address;
+                $smtpSetting->from_name = $request->from_name;
+                $smtpSetting->reply_to_address = $request->reply_to_address;
+                $smtpSetting->reply_to_name = $request->reply_to_name;
+                $smtpSetting->timeout = $request->timeout;
+                $smtpSetting->local_domain = $request->local_domain;
+                $smtpSetting->is_active = $request->has('is_active') ? true : false;
+                $smtpSetting->save();
+                
+                // Log activity
+                ActivityLogService::logSettingsUpdate('smtp', [
+                    'mailer' => $request->mailer,
+                    'host' => $request->host,
+                    'is_active' => $smtpSetting->is_active,
+                ], Auth::user());
+                
+                return back()->with('success', 'SMTP settings updated successfully.');
                 
             default:
                 return back()->withErrors(['error' => 'Invalid section.']);

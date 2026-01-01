@@ -670,4 +670,180 @@
             </form>
         </div>
     </div>
+
+    <!-- SMTP Settings -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">SMTP Email Settings</h3>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ route('dashboard.admin.settings.update') }}">
+                @csrf
+                <input type="hidden" name="section" value="smtp">
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="is_active" value="1" {{ $smtpSettings->is_active ?? false ? 'checked' : '' }}>
+                        <strong>Activate SMTP Configuration</strong>
+                    </label>
+                    <small class="form-text text-muted d-block">When enabled, this SMTP configuration will be used for sending emails. Only one SMTP configuration can be active at a time.</small>
+                </div>
+                
+                <hr style="margin: 20px 0;">
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="mailer">Mailer <span class="text-danger">*</span></label>
+                            <select id="mailer" name="mailer" class="form-control" required>
+                                <option value="smtp" {{ ($smtpSettings->mailer ?? 'smtp') == 'smtp' ? 'selected' : '' }}>SMTP</option>
+                                <option value="sendmail" {{ ($smtpSettings->mailer ?? '') == 'sendmail' ? 'selected' : '' }}>Sendmail</option>
+                                <option value="mailgun" {{ ($smtpSettings->mailer ?? '') == 'mailgun' ? 'selected' : '' }}>Mailgun</option>
+                                <option value="ses" {{ ($smtpSettings->mailer ?? '') == 'ses' ? 'selected' : '' }}>Amazon SES</option>
+                                <option value="postmark" {{ ($smtpSettings->mailer ?? '') == 'postmark' ? 'selected' : '' }}>Postmark</option>
+                                <option value="log" {{ ($smtpSettings->mailer ?? '') == 'log' ? 'selected' : '' }}>Log (Testing)</option>
+                                <option value="array" {{ ($smtpSettings->mailer ?? '') == 'array' ? 'selected' : '' }}>Array (Testing)</option>
+                            </select>
+                            <small class="form-text text-muted">The mail transport driver to use</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="host">SMTP Host</label>
+                            <input type="text" id="host" name="host" class="form-control" 
+                                   value="{{ $smtpSettings->host ?? '' }}" 
+                                   placeholder="smtp.mailtrap.io">
+                            <small class="form-text text-muted">SMTP server hostname (e.g., smtp.gmail.com, smtp.mailtrap.io)</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="port">SMTP Port</label>
+                            <input type="number" id="port" name="port" class="form-control" 
+                                   value="{{ $smtpSettings->port ?? 587 }}" 
+                                   min="1" max="65535" placeholder="587">
+                            <small class="form-text text-muted">Common ports: 587 (TLS), 465 (SSL), 25</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="encryption">Encryption</label>
+                            <select id="encryption" name="encryption" class="form-control">
+                                <option value="">None</option>
+                                <option value="tls" {{ ($smtpSettings->encryption ?? 'tls') == 'tls' ? 'selected' : '' }}>TLS</option>
+                                <option value="ssl" {{ ($smtpSettings->encryption ?? '') == 'ssl' ? 'selected' : '' }}>SSL</option>
+                            </select>
+                            <small class="form-text text-muted">Encryption method (leave as None for unencrypted connections)</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="timeout">Timeout (seconds)</label>
+                            <input type="number" id="timeout" name="timeout" class="form-control" 
+                                   value="{{ $smtpSettings->timeout ?? '' }}" 
+                                   min="1" placeholder="30">
+                            <small class="form-text text-muted">Connection timeout in seconds</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="username">SMTP Username</label>
+                            <input type="text" id="username" name="username" class="form-control" 
+                                   value="{{ $smtpSettings->username ?? '' }}" 
+                                   placeholder="your-email@example.com">
+                            <small class="form-text text-muted">SMTP authentication username</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="password">SMTP Password</label>
+                            <input type="password" id="password" name="password" class="form-control" 
+                                   value="{{ $smtpSettings->password ?? '' }}" 
+                                   placeholder="Your SMTP password">
+                            <small class="form-text text-muted">SMTP authentication password (leave blank to keep current)</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr style="margin: 20px 0;">
+                
+                <h5>From Address Settings</h5>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="from_address">From Email Address</label>
+                            <input type="email" id="from_address" name="from_address" class="form-control" 
+                                   value="{{ $smtpSettings->from_address ?? '' }}" 
+                                   placeholder="noreply@example.com">
+                            <small class="form-text text-muted">Default sender email address</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="from_name">From Name</label>
+                            <input type="text" id="from_name" name="from_name" class="form-control" 
+                                   value="{{ $smtpSettings->from_name ?? '' }}" 
+                                   placeholder="Your Company Name">
+                            <small class="form-text text-muted">Default sender name</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <h5 style="margin-top: 20px;">Reply-To Settings (Optional)</h5>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="reply_to_address">Reply-To Email Address</label>
+                            <input type="email" id="reply_to_address" name="reply_to_address" class="form-control" 
+                                   value="{{ $smtpSettings->reply_to_address ?? '' }}" 
+                                   placeholder="support@example.com">
+                            <small class="form-text text-muted">Email address for replies (optional)</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="reply_to_name">Reply-To Name</label>
+                            <input type="text" id="reply_to_name" name="reply_to_name" class="form-control" 
+                                   value="{{ $smtpSettings->reply_to_name ?? '' }}" 
+                                   placeholder="Support Team">
+                            <small class="form-text text-muted">Name for reply-to address (optional)</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="local_domain">Local Domain</label>
+                    <input type="text" id="local_domain" name="local_domain" class="form-control" 
+                           value="{{ $smtpSettings->local_domain ?? '' }}" 
+                           placeholder="example.com">
+                    <small class="form-text text-muted">The domain name to use for EHLO/HELO commands (optional)</small>
+                </div>
+                
+                <div class="alert alert-info">
+                    <strong><i class="fas fa-info-circle"></i> Important Notes:</strong>
+                    <ul style="margin-bottom: 0; padding-left: 20px; margin-top: 10px;">
+                        <li>These SMTP settings are stored in the database and will override .env file settings when active.</li>
+                        <li>Only one SMTP configuration can be active at a time.</li>
+                        <li>For Gmail, you may need to use an "App Password" instead of your regular password.</li>
+                        <li>For security, passwords are stored in plain text in the database. Ensure your database is properly secured.</li>
+                        <li>Test your SMTP configuration after saving to ensure emails are sent correctly.</li>
+                    </ul>
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save SMTP Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 @endsection
