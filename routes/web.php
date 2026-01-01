@@ -59,31 +59,31 @@ Route::match(['get', 'post'], '/webhooks/coinpayments', [\App\Http\Controllers\W
 Route::prefix('')->name('website.')->group(function () {
     // Homepage
     Route::get('/', [HomeController::class, 'index'])->name('home');
-    
+
     // Ad Script (Public - for publishers to embed)
     Route::get('/js/ads-network.js', [\App\Http\Controllers\Website\AdScriptController::class, 'serveScript'])->name('ad-script');
-    
+
     // Advertiser Page
     Route::get('/advertiser', [AdvertiserController::class, 'index'])->name('advertiser');
-    
+
     // Publisher Page
     Route::get('/publisher', [PublisherController::class, 'index'])->name('publisher');
-    
+
     // FAQ Page
     Route::get('/faq', [FaqController::class, 'index'])->name('faq');
-    
+
     // Contact Page
     Route::get('/contact', [ContactController::class, 'index'])->name('contact');
     Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
-    
+
     // Report Abuse Page
     Route::get('/report-abuse', [ReportAbuseController::class, 'index'])->name('report-abuse');
     Route::post('/report-abuse', [ReportAbuseController::class, 'store'])->name('report-abuse.store');
-    
+
     // Report DMCA Page
     Route::get('/report-dmca', [ReportDmcaController::class, 'index'])->name('report-dmca');
     Route::post('/report-dmca', [ReportDmcaController::class, 'store'])->name('report-dmca.store');
-    
+
     // Dynamic pages (Terms, Privacy Policy, etc.)
     Route::get('/page/{slug}', [\App\Http\Controllers\Website\PageController::class, 'show'])->name('page.show');
 });
@@ -94,11 +94,11 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
     Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
     Route::post('/register', [RegisterController::class, 'register'])->name('register.submit');
-    
+
     // Two-Factor Authentication Routes
     Route::get('/two-factor/verify', [\App\Http\Controllers\Auth\TwoFactorVerificationController::class, 'show'])->name('two-factor.verify');
     Route::post('/two-factor/verify', [\App\Http\Controllers\Auth\TwoFactorVerificationController::class, 'verify'])->name('two-factor.verify.submit');
-    
+
     // Password Reset Routes
     Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
     Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
@@ -121,7 +121,7 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'a
         // Dashboard home - accessible to anyone with any admin permission
         Route::get('/', [AdminController::class, 'index'])->name('index');
         Route::get('/home', [AdminController::class, 'index'])->name('home');
-        
+
         // User management routes
         Route::middleware('permission:manage_users')->group(function () {
             Route::get('/users', [UsersController::class, 'index'])->name('users');
@@ -131,7 +131,7 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'a
             Route::delete('/users/{id}', [UsersController::class, 'destroy'])->name('users.destroy');
             Route::get('/users/{id}/referrals', [UsersController::class, 'referrals'])->name('users.referrals');
         });
-        
+
         // User approval/status routes
         Route::middleware('permission:approve_users')->group(function () {
             Route::post('/users/{id}/approve', [UsersController::class, 'approve'])->name('users.approve');
@@ -140,7 +140,7 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'a
             Route::post('/users/{id}/block', [UsersController::class, 'block'])->name('users.block');
             Route::post('/users/{id}/toggle-status', [UsersController::class, 'toggleStatus'])->name('users.toggle-status');
         });
-        
+
         // Website management routes
         Route::middleware('permission:manage_websites')->group(function () {
             Route::get('/websites', [AdminWebsitesController::class, 'index'])->name('websites');
@@ -151,7 +151,7 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'a
             Route::post('/websites/{id}/enable', [AdminWebsitesController::class, 'enable'])->name('websites.enable');
             Route::post('/websites/{id}/suspend', [AdminWebsitesController::class, 'suspend'])->name('websites.suspend');
         });
-        
+
         // Ad units management routes
         Route::middleware('permission:manage_ad_units')->group(function () {
             Route::get('/ad-units', [\App\Http\Controllers\Dashboard\Admin\AdUnitsController::class, 'index'])->name('ad-units');
@@ -162,20 +162,20 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'a
             Route::put('/ad-units/{id}', [\App\Http\Controllers\Dashboard\Admin\AdUnitsController::class, 'update'])->name('ad-units.update');
             Route::delete('/ad-units/{id}', [\App\Http\Controllers\Dashboard\Admin\AdUnitsController::class, 'destroy'])->name('ad-units.destroy');
         });
-        
+
         // Activity logs routes
         Route::middleware('permission:view_activity_logs')->group(function () {
             Route::get('/activity-logs', [\App\Http\Controllers\Dashboard\Admin\ActivityLogsController::class, 'index'])->name('activity-logs');
             Route::get('/activity-logs/{id}', [\App\Http\Controllers\Dashboard\Admin\ActivityLogsController::class, 'show'])->name('activity-logs.show');
         });
-        
+
         // Roles & permissions routes
         Route::middleware('permission:manage_roles')->group(function () {
             Route::resource('roles', \App\Http\Controllers\Dashboard\Admin\RolesController::class);
             Route::post('/users/{user}/assign-role', [\App\Http\Controllers\Dashboard\Admin\RolesController::class, 'assignRole'])->name('users.assign-role');
             Route::delete('/users/{user}/remove-role/{role}', [\App\Http\Controllers\Dashboard\Admin\RolesController::class, 'removeRole'])->name('users.remove-role');
         });
-        
+
         // Campaign management routes
         Route::middleware('permission:manage_campaigns')->group(function () {
             Route::get('/campaigns', [AdminCampaignsController::class, 'index'])->name('campaigns');
@@ -186,7 +186,7 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'a
             Route::post('/campaigns/{id}/resume', [AdminCampaignsController::class, 'resume'])->name('campaigns.resume');
             Route::delete('/campaigns/{id}', [AdminCampaignsController::class, 'destroy'])->name('campaigns.destroy');
         });
-        
+
         // Deposit management routes
         Route::middleware('permission:manage_deposits')->group(function () {
             Route::get('/deposits', [\App\Http\Controllers\Dashboard\Admin\DepositsController::class, 'index'])->name('deposits');
@@ -202,7 +202,7 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'a
             Route::post('/invoices/{id}/mark-paid', [\App\Http\Controllers\Dashboard\Admin\InvoicesController::class, 'markAsPaid'])->name('invoices.mark-paid');
             Route::post('/invoices/{id}/mark-sent', [\App\Http\Controllers\Dashboard\Admin\InvoicesController::class, 'markAsSent'])->name('invoices.mark-sent');
         });
-        
+
         // Withdrawal management routes
         Route::middleware('permission:manage_withdrawals')->group(function () {
             Route::get('/withdrawals', [AdminWithdrawalsController::class, 'index'])->name('withdrawals');
@@ -213,19 +213,19 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'a
             Route::get('/withdrawals/export/excel', [AdminWithdrawalsController::class, 'exportExcel'])->name('withdrawals.export.excel');
             Route::get('/withdrawals/export/pdf', [AdminWithdrawalsController::class, 'exportPdf'])->name('withdrawals.export.pdf');
         });
-        
+
         // Reports routes (accessible with any admin permission)
         Route::get('/reports', [ReportsController::class, 'index'])->name('reports');
         Route::get('/analytics/geo', [ReportsController::class, 'geo'])->name('analytics.geo');
         Route::get('/analytics/device', [ReportsController::class, 'device'])->name('analytics.device');
-        
+
         // Contact messages routes (accessible with any admin permission)
         Route::get('/contact-messages', [ContactMessagesController::class, 'index'])->name('contact-messages');
         Route::get('/contact-messages/{id}', [ContactMessagesController::class, 'show'])->name('contact-messages.show');
         Route::post('/contact-messages/{id}/mark-read', [ContactMessagesController::class, 'markAsRead'])->name('contact-messages.mark-read');
         Route::post('/contact-messages/{id}/mark-unread', [ContactMessagesController::class, 'markAsUnread'])->name('contact-messages.mark-unread');
         Route::delete('/contact-messages/{id}', [ContactMessagesController::class, 'destroy'])->name('contact-messages.destroy');
-        
+
         // Settings and configuration routes
         Route::middleware('permission:manage_settings')->group(function () {
             Route::resource('manual-payment-accounts', ManualPaymentAccountsController::class);
@@ -243,31 +243,31 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'a
             Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
             Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');
         });
-        
+
         // Notifications routes (accessible with any admin permission)
         Route::get('/notifications', [NotificationsController::class, 'index'])->name('notifications.index');
         Route::get('/notifications/recent', [NotificationsController::class, 'recent'])->name('notifications.recent');
         Route::post('/notifications/{notification}/read', [NotificationsController::class, 'markAsRead'])->name('notifications.mark-read');
         Route::post('/notifications/{notification}/unread', [NotificationsController::class, 'markAsUnread'])->name('notifications.mark-unread');
         Route::post('/notifications/mark-all-read', [NotificationsController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
-        
+
         // Profile routes (accessible with any admin permission)
         Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
         Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
-        
+
         // Security / 2FA routes (accessible with any admin permission)
         Route::get('/security/two-factor', [\App\Http\Controllers\Dashboard\Admin\SecurityController::class, 'show'])->name('security.two-factor');
         Route::post('/security/two-factor/enable', [\App\Http\Controllers\Dashboard\Admin\SecurityController::class, 'enable'])->name('security.two-factor.enable');
         Route::post('/security/two-factor/disable', [\App\Http\Controllers\Dashboard\Admin\SecurityController::class, 'disable'])->name('security.two-factor.disable');
         Route::get('/security/two-factor/recovery-codes', [\App\Http\Controllers\Dashboard\Admin\SecurityController::class, 'recoveryCodes'])->name('security.two-factor.recovery-codes');
-        
+
         // CMS routes (accessible with manage_settings permission)
         Route::middleware('permission:manage_settings')->group(function () {
             Route::resource('announcements', \App\Http\Controllers\Dashboard\Admin\AnnouncementsController::class);
             Route::resource('email-templates', \App\Http\Controllers\Dashboard\Admin\EmailTemplatesController::class);
             Route::resource('pages', \App\Http\Controllers\Dashboard\Admin\PagesController::class);
         });
-        
+
         // Support tickets routes (accessible with any admin permission)
         Route::prefix('support-tickets')->name('support-tickets.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Dashboard\Admin\SupportTicketsController::class, 'index'])->name('index');
@@ -277,7 +277,7 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'a
             Route::delete('/{supportTicket}', [\App\Http\Controllers\Dashboard\Admin\SupportTicketsController::class, 'destroy'])->name('destroy');
         });
     });
-    
+
     // Advertiser Dashboard Routes (only for advertiser role)
     Route::prefix('advertiser')->name('advertiser.')->middleware('role:advertiser')->group(function () {
         Route::get('/', [DashboardAdvertiserController::class, 'index'])->name('index');
@@ -321,7 +321,7 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'a
             Route::post('/{supportTicket}/reply', [\App\Http\Controllers\Dashboard\User\SupportTicketsController::class, 'reply'])->name('reply');
         });
     });
-    
+
     // Publisher Dashboard Routes (only for publisher role)
     Route::prefix('publisher')->name('publisher.')->middleware('role:publisher')->group(function () {
         Route::get('/', [DashboardPublisherController::class, 'index'])->name('index');
@@ -334,7 +334,7 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'a
         Route::post('/sites/{website}/verify', [SitesController::class, 'verify'])->name('sites.verify');
         Route::get('/sites/{website}/verification-file', [SitesController::class, 'downloadVerificationFile'])->name('sites.verification-file');
         Route::delete('/sites/{website}', [SitesController::class, 'destroy'])->name('sites.destroy');
-        
+
         // Ad Units Routes
         Route::get('/sites/{website}/ad-units', [AdUnitController::class, 'index'])->name('sites.ad-units.index');
         Route::get('/sites/{website}/ad-units/create', [AdUnitController::class, 'create'])->name('sites.ad-units.create');
@@ -343,7 +343,7 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'a
         Route::get('/ad-units/{adUnit}/edit', [AdUnitController::class, 'edit'])->name('ad-units.edit');
         Route::put('/ad-units/{adUnit}', [AdUnitController::class, 'update'])->name('ad-units.update');
         Route::delete('/ad-units/{adUnit}', [AdUnitController::class, 'destroy'])->name('ad-units.destroy');
-        
+
         Route::get('/earnings', [EarningsController::class, 'index'])->name('earnings');
         Route::get('/statistics', [StatisticsController::class, 'index'])->name('statistics');
         Route::get('/analytics/geo', [StatisticsController::class, 'geo'])->name('analytics.geo');
@@ -371,7 +371,7 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'a
 // Default dashboard route (redirects based on user role, requires approval)
 Route::middleware(['auth', 'active', 'approved'])->get('/dashboard', function () {
     $user = auth()->user();
-    
+
     if ($user->isAdmin()) {
         return redirect()->route('dashboard.admin.home');
     } elseif ($user->isPublisher()) {
@@ -379,6 +379,6 @@ Route::middleware(['auth', 'active', 'approved'])->get('/dashboard', function ()
     } elseif ($user->isAdvertiser()) {
         return redirect()->route('dashboard.advertiser.home');
     }
-    
+
     return redirect()->route('website.home');
 })->name('dashboard');

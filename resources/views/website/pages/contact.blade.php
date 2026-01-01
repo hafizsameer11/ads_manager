@@ -6,13 +6,13 @@
 
 @section('content')
     <section class="section" style="padding-top: 100px;">
-        <div class="container">
+        <div class="container" style="width: 90%; max-width: none; margin: 0 auto;">
             <h1 class="section-title">Contact Us</h1>
             <p class="section-subtitle">
                 We're here to help! Get in touch with our team for any questions or support
             </p>
 
-            <div style="max-width: 800px; margin: 0 auto;">
+            <div style="width: 100%;">
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; margin-bottom: 50px;">
                     <div style="text-align: center; padding: 30px; background: var(--bg-light); border-radius: 12px;">
                         <div style="width: 60px; height: 60px; margin: 0 auto 20px; background: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">📧</div>
