@@ -421,16 +421,10 @@ Route::get('/migrate/rollback', function () {
     return response()->json(['message' => 'Migration rollback successfully'], 200);
 });
 Route::get('/seed/roles-permissions', function () {
-
-    // allow ONLY in production
-    abort_unless(app()->environment('production'), 403, 'Not allowed');
-
     Artisan::call('db:seed', [
         '--class' => 'RolesAndPermissionsSeeder',
         '--force' => true
     ]);
 
-    return response()->json([
-        'message' => 'RolesAndPermissionsSeeder executed successfully'
-    ]);
+    return 'Seeder executed';
 });
