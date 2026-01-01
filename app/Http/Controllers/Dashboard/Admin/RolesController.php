@@ -14,10 +14,15 @@ class RolesController extends Controller
 {
     /**
      * Display a listing of roles.
+     * Note: Admin role is excluded from the list as it has full access and doesn't need management.
      */
     public function index()
     {
-        $roles = Role::withCount(['users', 'permissions'])->latest()->paginate(20);
+        // Exclude admin role from the list - admin has full access and doesn't need to be shown
+        $roles = Role::withCount(['users', 'permissions'])
+            ->where('slug', '!=', 'admin')
+            ->latest()
+            ->paginate(20);
         return view('dashboard.admin.roles.index', compact('roles'));
     }
 
