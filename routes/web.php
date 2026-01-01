@@ -18,6 +18,8 @@ use App\Http\Controllers\Dashboard\Admin\CampaignsController as AdminCampaignsCo
 use App\Http\Controllers\Dashboard\Admin\WithdrawalsController as AdminWithdrawalsController;
 use App\Http\Controllers\Dashboard\Admin\ReportsController;
 use App\Http\Controllers\Dashboard\Admin\ContactMessagesController;
+use App\Http\Controllers\Dashboard\Admin\AbuseReportsController;
+use App\Http\Controllers\Dashboard\Admin\DmcaReportsController;
 use App\Http\Controllers\Dashboard\Admin\ManualPaymentAccountsController;
 use App\Http\Controllers\Dashboard\Admin\AllowedAccountTypesController;
 use App\Http\Controllers\Dashboard\Admin\TargetCountriesController;
@@ -225,6 +227,18 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'a
         Route::post('/contact-messages/{id}/mark-read', [ContactMessagesController::class, 'markAsRead'])->name('contact-messages.mark-read');
         Route::post('/contact-messages/{id}/mark-unread', [ContactMessagesController::class, 'markAsUnread'])->name('contact-messages.mark-unread');
         Route::delete('/contact-messages/{id}', [ContactMessagesController::class, 'destroy'])->name('contact-messages.destroy');
+
+        // Abuse reports routes (accessible with any admin permission)
+        Route::get('/abuse-reports', [AbuseReportsController::class, 'index'])->name('abuse-reports');
+        Route::get('/abuse-reports/{id}', [AbuseReportsController::class, 'show'])->name('abuse-reports.show');
+        Route::post('/abuse-reports/{id}/update-status', [AbuseReportsController::class, 'updateStatus'])->name('abuse-reports.update-status');
+        Route::delete('/abuse-reports/{id}', [AbuseReportsController::class, 'destroy'])->name('abuse-reports.destroy');
+
+        // DMCA reports routes (accessible with any admin permission)
+        Route::get('/dmca-reports', [DmcaReportsController::class, 'index'])->name('dmca-reports');
+        Route::get('/dmca-reports/{id}', [DmcaReportsController::class, 'show'])->name('dmca-reports.show');
+        Route::post('/dmca-reports/{id}/update-status', [DmcaReportsController::class, 'updateStatus'])->name('dmca-reports.update-status');
+        Route::delete('/dmca-reports/{id}', [DmcaReportsController::class, 'destroy'])->name('dmca-reports.destroy');
 
         // Settings and configuration routes
         Route::middleware('permission:manage_settings')->group(function () {

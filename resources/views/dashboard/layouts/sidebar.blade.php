@@ -103,14 +103,35 @@
                         <span>Reports</span>
                     </a>
                 </li>
-                <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.contact-messages') ? 'active' : '' }}">
-                    <a href="{{ route('dashboard.admin.contact-messages') }}" class="nav-link">
-                        <i class="fas fa-envelope"></i>
-                        <span>Contact Messages</span>
-                        @if(isset($contactNotifications) && $contactNotifications > 0)
-                            <span class="sidebar-badge">New</span>
-                        @endif
+                <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.contact-messages') || str_contains($currentRoute, 'dashboard.admin.abuse-reports') || str_contains($currentRoute, 'dashboard.admin.dmca-reports') ? 'active open' : '' }}">
+                    <a href="#" class="nav-link" onclick="event.preventDefault(); const parent = this.closest('.nav-item'); parent.classList.toggle('open');">
+                        <i class="fas fa-comments"></i>
+                        <span>User Messages</span>
+                        <i class="fas fa-chevron-down" style="margin-left: auto; font-size: 10px; transition: transform 0.3s;"></i>
                     </a>
+                    <ul class="nav-submenu">
+                        <li class="nav-subitem {{ str_contains($currentRoute, 'dashboard.admin.contact-messages') ? 'active' : '' }}">
+                            <a href="{{ route('dashboard.admin.contact-messages') }}" class="nav-sublink">
+                                <i class="fas fa-envelope"></i>
+                                <span>Contact Messages</span>
+                                @if(isset($contactNotifications) && $contactNotifications > 0)
+                                    <span class="sidebar-badge">New</span>
+                                @endif
+                            </a>
+                        </li>
+                        <li class="nav-subitem {{ str_contains($currentRoute, 'dashboard.admin.abuse-reports') ? 'active' : '' }}">
+                            <a href="{{ route('dashboard.admin.abuse-reports') }}" class="nav-sublink">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span>Abuse Reports</span>
+                            </a>
+                        </li>
+                        <li class="nav-subitem {{ str_contains($currentRoute, 'dashboard.admin.dmca-reports') ? 'active' : '' }}">
+                            <a href="{{ route('dashboard.admin.dmca-reports') }}" class="nav-sublink">
+                                <i class="fas fa-copyright"></i>
+                                <span>DMCA Reports</span>
+                            </a>
+                        </li>
+                    </ul>
                 </li>
                 <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.manual-payment-accounts') || str_contains($currentRoute, 'dashboard.admin.allowed-account-types') ? 'active' : '' }}">
                     <a href="{{ route('dashboard.admin.manual-payment-accounts.index') }}" class="nav-link">

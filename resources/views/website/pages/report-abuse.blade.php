@@ -4,6 +4,79 @@
 
 @section('description', 'Report abusive or inappropriate content or behavior on our platform')
 
+@push('styles')
+<style>
+    /* Form input fields - consistent styling */
+    .form-group input[type="text"],
+    .form-group input[type="email"],
+    .form-group input[type="url"] {
+        width: 100%;
+        padding: 12px 16px;
+        background-color: var(--bg-light);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 14px;
+        color: var(--text-dark);
+        transition: var(--transition);
+    }
+
+    .form-group input[type="text"]:focus,
+    .form-group input[type="email"]:focus,
+    .form-group input[type="url"]:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        background-color: white;
+        box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.1);
+    }
+
+    .form-group input[type="text"]::placeholder,
+    .form-group input[type="email"]::placeholder,
+    .form-group input[type="url"]::placeholder {
+        color: var(--text-light);
+    }
+
+    /* Select dropdown styling */
+    .form-select {
+        width: 100%;
+        padding: 12px 16px;
+        padding-right: 40px;
+        background-color: var(--bg-light);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 14px;
+        color: var(--text-dark);
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 12px;
+        transition: var(--transition);
+    }
+
+    .form-select:hover {
+        border-color: var(--primary-color);
+    }
+
+    .form-select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        background-color: white;
+        box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.1);
+    }
+
+    .form-select option {
+        background-color: white;
+        color: var(--text-dark);
+        padding: 10px;
+    }
+</style>
+@endpush
+
 @section('content')
     <section class="section" style="padding-top: 100px;">
         <div class="container" style="width: 90%; max-width: none; margin: 0 auto;">
@@ -15,7 +88,7 @@
             <div style="width: 100%;">
                 <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: var(--shadow-md);">
                     <p style="color: var(--text-light); line-height: 1.8; margin-bottom: 30px;">
-                        If you have encountered any abusive, inappropriate, or fraudulent content on our platform, 
+                        If you have encountered any abusive, inappropriate, or fraudulent content on our platform,
                         please fill out the form below. All reports are reviewed by our team and appropriate action will be taken.
                     </p>
 
@@ -39,7 +112,7 @@
                         @csrf
                         <div class="form-group">
                             <label for="type">Type of Abuse</label>
-                            <select id="type" name="type" style="width: 100%; padding: 12px 16px; background-color: var(--bg-light); border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; font-size: 14px;" required>
+                            <select id="type" name="type" class="form-select" required>
                                 <option value="">Select type of abuse</option>
                                 <option value="fraud">Fraud</option>
                                 <option value="spam">Spam</option>

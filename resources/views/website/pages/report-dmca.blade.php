@@ -4,6 +4,67 @@
 
 @section('description', 'Submit a DMCA takedown notice for copyright infringement')
 
+@push('styles')
+<style>
+    /* Form input fields - consistent styling */
+    .form-group input[type="text"],
+    .form-group input[type="email"],
+    .form-group input[type="tel"],
+    .form-group input[type="url"] {
+        width: 100%;
+        padding: 12px 16px;
+        background-color: var(--bg-light);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 14px;
+        color: var(--text-dark);
+        transition: var(--transition);
+    }
+
+    .form-group input[type="text"]:focus,
+    .form-group input[type="email"]:focus,
+    .form-group input[type="tel"]:focus,
+    .form-group input[type="url"]:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        background-color: white;
+        box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.1);
+    }
+
+    .form-group input[type="text"]::placeholder,
+    .form-group input[type="email"]::placeholder,
+    .form-group input[type="tel"]::placeholder,
+    .form-group input[type="url"]::placeholder {
+        color: var(--text-light);
+    }
+
+    /* Textarea fields - ensure consistency */
+    .form-group textarea {
+        width: 100%;
+        padding: 12px 16px;
+        background-color: var(--bg-light);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 14px;
+        resize: vertical;
+        transition: var(--transition);
+    }
+
+    .form-group textarea:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        background-color: white;
+        box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.1);
+    }
+
+    .form-group textarea::placeholder {
+        color: var(--text-light);
+    }
+</style>
+@endpush
+
 @section('content')
     <section class="section" style="padding-top: 100px;">
         <div class="container" style="width: 90%; max-width: none; margin: 0 auto;">
@@ -59,11 +120,11 @@
                         </div>
                         <div class="form-group">
                             <label for="original_work">Description of Original Work</label>
-                            <textarea id="original_work" name="original_work" rows="4" style="width: 100%; padding: 12px 16px; background-color: var(--bg-light); border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; font-size: 14px; resize: vertical;" placeholder="Describe the original copyrighted work" required></textarea>
+                            <textarea id="original_work" name="original_work" rows="4" placeholder="Describe the original copyrighted work" required></textarea>
                         </div>
                         <div class="form-group">
                             <label for="statement">Good Faith Statement</label>
-                            <textarea id="statement" name="statement" rows="4" style="width: 100%; padding: 12px 16px; background-color: var(--bg-light); border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; font-size: 14px; resize: vertical;" placeholder="I have a good faith belief that use of the copyrighted material described above is not authorized..." required></textarea>
+                            <textarea id="statement" name="statement" rows="4" placeholder="I have a good faith belief that use of the copyrighted material described above is not authorized..." required></textarea>
                         </div>
                         <div class="checkbox-group" style="margin-bottom: 20px;">
                             <input type="checkbox" id="accuracy" name="accuracy" required>
