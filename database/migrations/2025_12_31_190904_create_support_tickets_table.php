@@ -22,12 +22,12 @@ return new class extends Migration
             $table->foreignId('assigned_to')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamp('resolved_at')->nullable();
             $table->timestamps();
-            
+
             $table->index(['user_id', 'status']);
             $table->index(['status', 'priority']);
             $table->index('ticket_number');
         });
-        
+
         Schema::create('support_ticket_replies', function (Blueprint $table) {
             $table->id();
             $table->foreignId('ticket_id')->constrained('support_tickets')->onDelete('cascade');
@@ -35,7 +35,7 @@ return new class extends Migration
             $table->text('message');
             $table->boolean('is_internal')->default(false); // Internal notes visible only to admins
             $table->timestamps();
-            
+
             $table->index('ticket_id');
         });
     }
