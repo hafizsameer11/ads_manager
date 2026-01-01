@@ -1,45 +1,46 @@
 <?php
 
-use App\Http\Controllers\Website\HomeController;
-use App\Http\Controllers\Website\AdvertiserController;
-use App\Http\Controllers\Website\PublisherController;
-use App\Http\Controllers\Website\FaqController;
-use App\Http\Controllers\Website\ContactController;
-use App\Http\Controllers\Website\ReportAbuseController;
-use App\Http\Controllers\Website\ReportDmcaController;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Website\FaqController;
+use App\Http\Controllers\Website\HomeController;
 use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Website\ContactController;
+use App\Http\Controllers\Website\PublisherController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\Website\AdvertiserController;
+use App\Http\Controllers\Website\ReportDmcaController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Website\ReportAbuseController;
 use App\Http\Controllers\Dashboard\Admin\AdminController;
 use App\Http\Controllers\Dashboard\Admin\UsersController;
+use App\Http\Controllers\Dashboard\Admin\ProfileController;
+use App\Http\Controllers\Dashboard\Admin\ReportsController;
+use App\Http\Controllers\Dashboard\Admin\SettingsController;
+use App\Http\Controllers\Dashboard\Publisher\SitesController;
+use App\Http\Controllers\Dashboard\Publisher\AdUnitController;
+use App\Http\Controllers\Dashboard\Admin\DmcaReportsController;
+use App\Http\Controllers\Dashboard\Admin\AbuseReportsController;
+use App\Http\Controllers\Dashboard\Advertiser\BillingController;
+use App\Http\Controllers\Dashboard\Publisher\EarningsController;
+use App\Http\Controllers\Dashboard\Publisher\PaymentsController;
+use App\Http\Controllers\Dashboard\Admin\NotificationsController;
+use App\Http\Controllers\Dashboard\Advertiser\AnalyticsController;
+use App\Http\Controllers\Dashboard\Publisher\StatisticsController;
+use App\Http\Controllers\Dashboard\Admin\ContactMessagesController;
+use App\Http\Controllers\Dashboard\Admin\TargetCountriesController;
+use App\Http\Controllers\Dashboard\Admin\AllowedAccountTypesController;
+use App\Http\Controllers\Dashboard\Advertiser\CreateCampaignController;
+use App\Http\Controllers\Dashboard\Admin\ManualPaymentAccountsController;
 use App\Http\Controllers\Dashboard\Admin\WebsitesController as AdminWebsitesController;
 use App\Http\Controllers\Dashboard\Admin\CampaignsController as AdminCampaignsController;
 use App\Http\Controllers\Dashboard\Admin\WithdrawalsController as AdminWithdrawalsController;
-use App\Http\Controllers\Dashboard\Admin\ReportsController;
-use App\Http\Controllers\Dashboard\Admin\ContactMessagesController;
-use App\Http\Controllers\Dashboard\Admin\AbuseReportsController;
-use App\Http\Controllers\Dashboard\Admin\DmcaReportsController;
-use App\Http\Controllers\Dashboard\Admin\ManualPaymentAccountsController;
-use App\Http\Controllers\Dashboard\Admin\AllowedAccountTypesController;
-use App\Http\Controllers\Dashboard\Admin\TargetCountriesController;
-use App\Http\Controllers\Dashboard\Admin\NotificationsController;
-use App\Http\Controllers\Dashboard\Admin\SettingsController;
-use App\Http\Controllers\Dashboard\Admin\ProfileController;
-use App\Http\Controllers\Dashboard\Advertiser\AdvertiserController as DashboardAdvertiserController;
-use App\Http\Controllers\Dashboard\Advertiser\CampaignsController as AdvertiserCampaignsController;
-use App\Http\Controllers\Dashboard\Advertiser\CreateCampaignController;
-use App\Http\Controllers\Dashboard\Advertiser\AnalyticsController;
-use App\Http\Controllers\Dashboard\Advertiser\BillingController;
+use App\Http\Controllers\Dashboard\Publisher\ProfileController as PublisherProfileController;
 use App\Http\Controllers\Dashboard\Advertiser\ProfileController as AdvertiserProfileController;
 use App\Http\Controllers\Dashboard\Publisher\PublisherController as DashboardPublisherController;
-use App\Http\Controllers\Dashboard\Publisher\SitesController;
-use App\Http\Controllers\Dashboard\Publisher\AdUnitController;
-use App\Http\Controllers\Dashboard\Publisher\EarningsController;
-use App\Http\Controllers\Dashboard\Publisher\StatisticsController;
-use App\Http\Controllers\Dashboard\Publisher\PaymentsController;
-use App\Http\Controllers\Dashboard\Publisher\ProfileController as PublisherProfileController;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Dashboard\Advertiser\CampaignsController as AdvertiserCampaignsController;
+use App\Http\Controllers\Dashboard\Advertiser\AdvertiserController as DashboardAdvertiserController;
 
 // Webhook routes (no auth required)
 Route::post('/webhooks/stripe', [\App\Http\Controllers\Webhook\StripeWebhookController::class, 'handle'])->name('webhooks.stripe');
@@ -398,3 +399,24 @@ Route::middleware(['auth', 'active', 'approved'])->get('/dashboard', function ()
 
     return redirect()->route('website.home');
 })->name('dashboard');
+Route::get('/optimize-app', function () {
+    Artisan::call('optimize:clear');
+    Artisan::call('cache:clear');
+    Artisan::call('config:clear');
+    Artisan::call('route:clear');
+    Artisan::call('view:clear');
+    Artisan::call('config:cache');
+    Artisan::call('route:cache');
+    Artisan::call('view:cache');
+    Artisan::call('optimize');
+
+    return "Application optimized and caches cleared successfully!";
+});
+Route::get('/migrate', function () {
+    Artisan::call('migrate');
+    return response()->json(['message' => 'Migration successful'], 200);
+});
+Route::get('/migrate/rollback', function () {
+    Artisan::call('migrate:rollback');
+    return response()->json(['message' => 'Migration rollback successfully'], 200);
+});
