@@ -7,7 +7,7 @@
         <a href="{{ route('dashboard.admin.roles.index') }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> Back to Roles
         </a>
-        @if(auth()->user()->hasPermission('manage_roles'))
+        @if(auth()->user()->isAdmin() || auth()->user()->hasPermission('manage_roles'))
         @if($role->slug !== 'admin')
             <a href="{{ route('dashboard.admin.roles.edit', $role) }}" class="btn btn-primary">
                 <i class="fas fa-edit"></i> Edit Role

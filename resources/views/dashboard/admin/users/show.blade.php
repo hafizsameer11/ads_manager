@@ -49,15 +49,27 @@
                                 Publisher Information
                             @elseif($user->isAdvertiser())
                                 Advertiser Information
+                            @elseif($user->role === 'sub-admin' || $user->hasRole('sub-admin'))
+                                Sub-Admin Information
                             @else
                                 User Information
                             @endif
                         </h3>
-                        @if(($user->isPublisher() && $user->publisher) || ($user->isAdvertiser() && $user->advertiser))
+                        @if(($user->isPublisher() && $user->publisher) || ($user->isAdvertiser() && $user->advertiser) || ($user->role === 'sub-admin' || $user->hasRole('sub-admin')))
                              <div style="display: flex; gap: 5px;">
                                  <a href="{{ route('dashboard.admin.users.edit', $user->id) }}" class="btn btn-primary">
                                      <i class="fas fa-edit"></i> Edit
                                  </a>
+                                 @if($user->is_active == 1)
+                                     <button type="button" class="btn btn-warning" onclick="showSuspendModal()">
+                                         <i class="fas fa-ban"></i> Suspend
+                                     </button>
+                                 @endif
+                                 @if($user->is_active != 0 && $user->is_active != 3)
+                                     <button type="button" class="btn btn-danger" onclick="showBlockModal()">
+                                         <i class="fas fa-times-circle"></i> Block
+                                     </button>
+                                 @endif
                                  {{-- @if($user->is_active == 1)
                                      <button type="button" class="btn btn-warning" onclick="showSuspendModal()">
                                          <i class="fas fa-ban"></i> Suspend
@@ -92,7 +104,22 @@
                         </tr>
                         <tr>
                             <th>Role:</th>
-                            <td><span class="badge badge-primary">{{ ucfirst($user->role) }}</span></td>
+                            <td>
+                                @if($user->hasRole('admin') && !$user->hasRole('sub-admin'))
+                                    <span class="badge badge-danger">Admin</span>
+                                @elseif($user->hasRole('sub-admin') || $user->role === 'sub-admin')
+                                    <span class="badge badge-warning">Sub-Admin</span>
+                                    @if($user->roles->count() > 0)
+                                        <br><small class="text-muted">Assigned Role: 
+                                            @foreach($user->roles as $role)
+                                                {{ $role->name }}
+                                            @endforeach
+                                        </small>
+                                    @endif
+                                @else
+                                    <span class="badge badge-primary">{{ ucfirst($user->role) }}</span>
+                                @endif
+                            </td>
                         </tr>
                         <tr>
                             <th>Account Status:</th>
@@ -295,6 +322,8 @@
                             Suspend Publisher
                         @elseif($user->isAdvertiser())
                             Suspend Advertiser
+                        @elseif($user->role === 'sub-admin' || $user->hasRole('sub-admin'))
+                            Suspend Sub-Admin
                         @else
                             Suspend User
                         @endif
@@ -309,6 +338,8 @@
                                 publisher
                             @elseif($user->isAdvertiser())
                                 advertiser
+                            @elseif($user->role === 'sub-admin' || $user->hasRole('sub-admin'))
+                                sub-admin
                             @else
                                 user
                             @endif
@@ -335,6 +366,8 @@
                                 Suspend Publisher
                             @elseif($user->isAdvertiser())
                                 Suspend Advertiser
+                            @elseif($user->role === 'sub-admin' || $user->hasRole('sub-admin'))
+                                Suspend Sub-Admin
                             @else
                                 Suspend User
                             @endif
@@ -356,6 +389,8 @@
                             Block Publisher
                         @elseif($user->isAdvertiser())
                             Block Advertiser
+                        @elseif($user->role === 'sub-admin' || $user->hasRole('sub-admin'))
+                            Block Sub-Admin
                         @else
                             Block User
                         @endif
@@ -374,6 +409,8 @@
                                     publisher
                                 @elseif($user->isAdvertiser())
                                     advertiser
+                                @elseif($user->role === 'sub-admin' || $user->hasRole('sub-admin'))
+                                    sub-admin
                                 @else
                                     user
                                 @endif
@@ -386,6 +423,8 @@
                                 publisher
                             @elseif($user->isAdvertiser())
                                 advertiser
+                            @elseif($user->role === 'sub-admin' || $user->hasRole('sub-admin'))
+                                sub-admin
                             @else
                                 user
                             @endif
@@ -412,6 +451,8 @@
                                 Block Publisher
                             @elseif($user->isAdvertiser())
                                 Block Advertiser
+                            @elseif($user->role === 'sub-admin' || $user->hasRole('sub-admin'))
+                                Block Sub-Admin
                             @else
                                 Block User
                             @endif

@@ -127,6 +127,8 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'a
         // User management routes
         Route::middleware('permission:manage_users')->group(function () {
             Route::get('/users', [UsersController::class, 'index'])->name('users');
+            Route::get('/users/create', [UsersController::class, 'create'])->name('users.create');
+            Route::post('/users', [UsersController::class, 'store'])->name('users.store');
             Route::get('/users/{id}', [UsersController::class, 'show'])->name('users.show');
             Route::get('/users/{id}/edit', [UsersController::class, 'edit'])->name('users.edit');
             Route::put('/users/{id}', [UsersController::class, 'update'])->name('users.update');

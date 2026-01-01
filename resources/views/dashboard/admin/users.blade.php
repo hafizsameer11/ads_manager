@@ -306,8 +306,13 @@
 @section('content')
     <!-- Users Table -->
     <div class="card">
-        <div class="card-header">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
             <h3 class="card-title">Users List</h3>
+            @if(auth()->user()->isAdmin() || auth()->user()->hasPermission('manage_users'))
+            <a href="{{ route('dashboard.admin.users.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Create User
+            </a>
+            @endif
         </div>
         <div class="card-body">
             @if (session('success'))
@@ -352,10 +357,9 @@
                         <label class="form-label">Role</label>
                         <select name="role" class="form-control">
                             <option value="">All Roles</option>
-                            <option value="publisher" {{ request('role') == 'publisher' ? 'selected' : '' }}>Publisher
-                            </option>
-                            <option value="advertiser" {{ request('role') == 'advertiser' ? 'selected' : '' }}>Advertiser
-                            </option>
+                            <option value="sub-admin" {{ request('role') == 'sub-admin' ? 'selected' : '' }}>Sub-Admin</option>
+                            <option value="publisher" {{ request('role') == 'publisher' ? 'selected' : '' }}>Publisher</option>
+                            <option value="advertiser" {{ request('role') == 'advertiser' ? 'selected' : '' }}>Advertiser</option>
                         </select>
                     </div>
                     <div class="filter-field">
@@ -402,8 +406,12 @@
                     <tbody>
                         @forelse($users as $user)
                             @php
-                                // Normalize role
-                                $role = strtolower(trim($user->role));
+                                // Normalize role - check for sub-admin first
+                                if ($user->hasRole('sub-admin') || $user->role === 'sub-admin') {
+                                    $role = 'sub-admin';
+                                } else {
+                                    $role = strtolower(trim($user->role));
+                                }
 
                                 // Approval status (publisher / advertiser)
                                 if ($role === 'publisher') {
@@ -435,7 +443,13 @@
 
                                 {{-- ROLE --}}
                                 <td>
-                                    {{ $user->role }}
+                                    @if($user->hasRole('admin'))
+                                        Admin
+                                    @elseif($user->hasRole('sub-admin') || $user->role === 'sub-admin')
+                                        Sub-Admin
+                                    @else
+                                        {{ ucfirst($user->role) }}
+                                    @endif
                                 </td>
                                 {{-- <td>{{{}}</td> --}}
 
@@ -463,8 +477,8 @@
                                 <td>
                                     <div class="action-buttons">
 
-                                        {{-- VIEW / EDIT (for publishers and advertisers) --}}
-                                        @if ($role === 'publisher' || $role === 'advertiser')
+                                        {{-- VIEW / EDIT (for publishers, advertisers, and sub-admins) --}}
+                                        @if ($role === 'publisher' || $role === 'advertiser' || $role === 'sub-admin' || $user->hasRole('sub-admin'))
                                             <a href="{{ route('dashboard.admin.users.show', $user->id) }}" 
                                                class="btn btn-sm btn-info" title="View Details">
                                                 <i class="fas fa-eye"></i>

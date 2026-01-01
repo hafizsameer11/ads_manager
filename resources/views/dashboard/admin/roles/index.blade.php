@@ -5,7 +5,11 @@
 @section('content')
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h2>Roles & Permissions</h2>
-        @if(auth()->user()->hasPermission('manage_roles'))
+        @if(auth()->user()->isAdmin())
+        <a href="{{ route('dashboard.admin.roles.create') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Create Role
+        </a>
+        @elseif(auth()->user()->hasPermission('manage_roles'))
         <a href="{{ route('dashboard.admin.roles.create') }}" class="btn btn-primary">
             <i class="fas fa-plus"></i> Create Role
         </a>
@@ -60,7 +64,7 @@
                                         <a href="{{ route('dashboard.admin.roles.show', $role) }}" class="btn btn-sm btn-info" title="View">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        @if(auth()->user()->hasPermission('manage_roles'))
+                                        @if(auth()->user()->isAdmin() || auth()->user()->hasPermission('manage_roles'))
                                         @if($role->slug !== 'admin')
                                             <a href="{{ route('dashboard.admin.roles.edit', $role) }}" class="btn btn-sm btn-secondary" title="Edit">
                                                 <i class="fas fa-edit"></i>

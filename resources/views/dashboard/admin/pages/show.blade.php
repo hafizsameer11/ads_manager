@@ -12,7 +12,7 @@
             <a href="{{ route('dashboard.admin.pages.index') }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Back to Pages
             </a>
-            @if(Auth::user()->hasPermission('manage_settings'))
+            @if(Auth::user()->isAdmin() || Auth::user()->hasPermission('manage_settings'))
             <a href="{{ route('dashboard.admin.pages.edit', $page) }}" class="btn btn-primary">
                 <i class="fas fa-edit"></i> Edit
             </a>
@@ -78,7 +78,7 @@
         </div>
     </div>
 
-    @if(Auth::user()->hasPermission('manage_settings'))
+    @if(Auth::user()->isAdmin() || Auth::user()->hasPermission('manage_settings'))
     <div class="card">
         <div class="card-header">
             <h4 class="card-title">Danger Zone</h4>

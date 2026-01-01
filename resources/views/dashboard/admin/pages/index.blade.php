@@ -5,7 +5,7 @@
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3 class="mb-0">Pages Management</h3>
-        @if(Auth::user()->hasPermission('manage_settings'))
+        @if(Auth::user()->isAdmin() || Auth::user()->hasPermission('manage_settings'))
         <a href="{{ route('dashboard.admin.pages.create') }}" class="btn btn-primary">
             <i class="fas fa-plus"></i> Create Page
         </a>
@@ -100,7 +100,7 @@
                                         <a href="{{ route('dashboard.admin.pages.show', $page) }}" class="btn btn-sm btn-info" title="View">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        @if(Auth::user()->hasPermission('manage_settings'))
+                                        @if(Auth::user()->isAdmin() || Auth::user()->hasPermission('manage_settings'))
                                         <a href="{{ route('dashboard.admin.pages.edit', $page) }}" class="btn btn-sm btn-secondary" title="Edit">
                                             <i class="fas fa-edit"></i>
                                         </a>

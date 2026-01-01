@@ -241,54 +241,6 @@
         </div>
     </div>
 
-    <!-- Payment Gateway Settings -->
-    <div class="card">
-        <div class="card-header">
-            <h3 class="card-title">Payment Gateway Settings</h3>
-        </div>
-        <div class="card-body">
-            <form method="POST" action="{{ route('dashboard.admin.settings.update') }}">
-                @csrf
-                <input type="hidden" name="section" value="payment">
-                
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label>
-                                <input type="checkbox" name="payment_gateways[]" value="paypal" {{ in_array('paypal', $settings['payment_gateways']) ? 'checked' : '' }}> PayPal
-                            </label>
-                        </div>
-                        <div class="form-group">
-                            <label>
-                                <input type="checkbox" name="payment_gateways[]" value="coinpayment" {{ in_array('coinpayment', $settings['payment_gateways']) ? 'checked' : '' }}> CoinPayment
-                            </label>
-                        </div>
-                        <div class="form-group">
-                            <label>
-                                <input type="checkbox" name="payment_gateways[]" value="faucetpay" {{ in_array('faucetpay', $settings['payment_gateways']) ? 'checked' : '' }}> FaucetPay
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label>
-                                <input type="checkbox" name="payment_gateways[]" value="bank_swift" {{ in_array('bank_swift', $settings['payment_gateways']) ? 'checked' : '' }}> Bank SWIFT
-                            </label>
-                        </div>
-                        <div class="form-group">
-                            <label>
-                                <input type="checkbox" name="payment_gateways[]" value="wise" {{ in_array('wise', $settings['payment_gateways']) ? 'checked' : '' }}> Wise
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-md-12">
-                        <button type="submit" class="btn btn-primary">Save Payment Settings</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <!-- Stripe Payment Gateway Configuration -->
     <div class="card">
         <div class="card-header">

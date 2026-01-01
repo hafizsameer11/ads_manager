@@ -118,10 +118,18 @@ class User extends Authenticatable
 
     /**
      * Check if user has a specific permission.
+     * 
+     * STRICT RULE: Admin (role === 'admin') always returns true.
+     * Permissions are ONLY checked for Sub-Admins.
      */
     public function hasPermission(string $permissionSlug): bool
     {
-        // Check if user has permission through any of their roles
+        // HARD RULE: Admin bypasses ALL permission checks
+        if ($this->role === 'admin' || $this->hasRole('admin')) {
+            return true;
+        }
+
+        // For Sub-Admins: Check if user has permission through any of their roles
         return $this->roles()->whereHas('permissions', function ($query) use ($permissionSlug) {
             $query->where('slug', $permissionSlug);
         })->exists();
@@ -129,9 +137,17 @@ class User extends Authenticatable
 
     /**
      * Check if user has any of the given permissions.
+     * 
+     * STRICT RULE: Admin (role === 'admin') always returns true.
      */
     public function hasAnyPermission(array $permissionSlugs): bool
     {
+        // HARD RULE: Admin bypasses ALL permission checks
+        if ($this->role === 'admin' || $this->hasRole('admin')) {
+            return true;
+        }
+
+        // For Sub-Admins: Check if user has any of the permissions
         foreach ($permissionSlugs as $permissionSlug) {
             if ($this->hasPermission($permissionSlug)) {
                 return true;

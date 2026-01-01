@@ -5,7 +5,7 @@
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3 class="mb-0">Email Templates Management</h3>
-        @if(Auth::user()->hasPermission('manage_settings'))
+        @if(Auth::user()->isAdmin() || Auth::user()->hasPermission('manage_settings'))
         <a href="{{ route('dashboard.admin.email-templates.create') }}" class="btn btn-primary">
             <i class="fas fa-plus"></i> Create Template
         </a>
@@ -65,7 +65,7 @@
                                         <a href="{{ route('dashboard.admin.email-templates.show', $template) }}" class="btn btn-sm btn-info" title="View">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        @if(Auth::user()->hasPermission('manage_settings'))
+                                        @if(Auth::user()->isAdmin() || Auth::user()->hasPermission('manage_settings'))
                                         <a href="{{ route('dashboard.admin.email-templates.edit', $template) }}" class="btn btn-sm btn-secondary" title="Edit">
                                             <i class="fas fa-edit"></i>
                                         </a>

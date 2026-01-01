@@ -45,6 +45,8 @@
                     Edit Publisher: {{ $user->name }}
                 @elseif($user->isAdvertiser())
                     Edit Advertiser: {{ $user->name }}
+                @elseif($user->role === 'sub-admin' || $user->hasRole('sub-admin'))
+                    Edit Sub-Admin: {{ $user->name }}
                 @else
                     Edit User: {{ $user->name }}
                 @endif
@@ -221,6 +223,40 @@
                             </div>
                         </div>
                     </div>
+                @elseif($user->role === 'sub-admin' || $user->hasRole('sub-admin'))
+                    <h5 class="mb-3" style="border-bottom: 1px solid #ddd; padding-bottom: 10px;">Sub-Admin Settings</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="is_active">Account Status <span class="text-danger">*</span></label>
+                                <select id="is_active" name="is_active" class="form-control" required>
+                                    <option value="2" {{ old('is_active', $user->is_active) == 2 ? 'selected' : '' }}>Pending</option>
+                                    <option value="1" {{ old('is_active', $user->is_active) == 1 ? 'selected' : '' }}>Approved</option>
+                                    <option value="3" {{ old('is_active', $user->is_active) == 3 ? 'selected' : '' }}>Suspended</option>
+                                    <option value="0" {{ old('is_active', $user->is_active) == 0 ? 'selected' : '' }}>Rejected/Blocked</option>
+                                </select>
+                                <small class="text-muted">This controls the account access status</small>
+                                @error('is_active')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Assigned Role:</label>
+                                <div>
+                                    @if($user->roles->count() > 0)
+                                        @foreach($user->roles as $role)
+                                            <span class="badge badge-info">{{ $role->name }}</span>
+                                        @endforeach
+                                    @else
+                                        <span class="text-muted">No role assigned</span>
+                                    @endif
+                                </div>
+                                <small class="text-muted">Role permissions can be managed in Roles & Permissions section</small>
+                            </div>
+                        </div>
+                    </div>
                 @endif
 
                 <hr class="my-4">
@@ -233,6 +269,8 @@
                                 Update Publisher
                             @elseif($user->isAdvertiser())
                                 Update Advertiser
+                            @elseif($user->role === 'sub-admin' || $user->hasRole('sub-admin'))
+                                Update Sub-Admin
                             @else
                                 Update User
                             @endif

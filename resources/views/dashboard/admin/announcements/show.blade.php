@@ -9,7 +9,7 @@
             <a href="{{ route('dashboard.admin.announcements.index') }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Back to Announcements
             </a>
-            @if(Auth::user()->hasPermission('manage_settings'))
+            @if(Auth::user()->isAdmin() || Auth::user()->hasPermission('manage_settings'))
             <a href="{{ route('dashboard.admin.announcements.edit', $announcement) }}" class="btn btn-primary">
                 <i class="fas fa-edit"></i> Edit
             </a>

@@ -12,6 +12,8 @@ use App\Mail\UserRejectedMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class UsersController extends Controller
 {
@@ -20,6 +22,92 @@ class UsersController extends Controller
     public function __construct(NotificationService $notificationService)
     {
         $this->notificationService = $notificationService;
+    }
+
+    /**
+     * Show the form for creating a new user.
+     *
+     * @return \Illuminate\View\View
+     */
+    public function create()
+    {
+        // Get all roles except admin (for sub-admin selection)
+        $roles = \App\Models\Role::where('slug', '!=', 'admin')->get();
+        
+        return view('dashboard.admin.users.create', compact('roles'));
+    }
+
+    /**
+     * Store a newly created user.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:users|alpha_dash',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+            'role' => 'required|in:sub-admin,publisher,advertiser',
+            'role_id' => 'required_if:role,sub-admin|exists:roles,id',
+            'phone' => 'nullable|string|max:20',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            // Create user
+            $user = User::create([
+                'name' => $request->name,
+                'username' => $request->username,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'role' => $request->role, // Store actual role: 'sub-admin', 'publisher', or 'advertiser'
+                'phone' => $request->phone,
+                'referral_code' => User::generateReferralCode(),
+                'is_active' => 1, // Auto-approve admin-created users
+            ]);
+
+            // Handle sub-admin: assign role from dropdown
+            if ($request->role === 'sub-admin') {
+                $role = \App\Models\Role::findOrFail($request->role_id);
+                $user->assignRole($role->slug);
+            }
+
+            // Create role-specific profile
+            if ($request->role === 'publisher') {
+                \App\Models\Publisher::create([
+                    'user_id' => $user->id,
+                    'status' => 'approved',
+                    'tier' => 'tier3',
+                    'approved_at' => now(),
+                ]);
+            } elseif ($request->role === 'advertiser') {
+                \App\Models\Advertiser::create([
+                    'user_id' => $user->id,
+                    'status' => 'approved',
+                    'balance' => 0.00,
+                    'total_spent' => 0.00,
+                    'approved_at' => now(),
+                ]);
+            }
+
+            // Log activity
+            ActivityLogService::log('user.created', "User '{$user->name}' ({$request->role}) was created by admin", $user, [
+                'user_name' => $user->name,
+                'user_email' => $user->email,
+                'user_role' => $request->role,
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('dashboard.admin.users')
+                ->with('success', ucfirst($request->role) . ' created successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'Failed to create user: ' . $e->getMessage()])->withInput();
+        }
     }
 
     /**
@@ -41,8 +129,15 @@ class UsersController extends Controller
                 ]);
         }
         
-        // Exclude users with admin role from the list
+        // Exclude actual admins from the list, but include sub-admins, publishers, and advertisers
         $query = User::with(['publisher', 'advertiser', 'roles'])
+            ->where(function($q) {
+                // Include sub-admins, publishers, and advertisers
+                $q->where('role', 'sub-admin')
+                  ->orWhere('role', 'publisher')
+                  ->orWhere('role', 'advertiser');
+            })
+            // Exclude actual admins (users with admin role but NOT sub-admin)
             ->whereDoesntHave('roles', function($q) {
                 $q->where('slug', 'admin');
             });
@@ -245,14 +340,14 @@ class UsersController extends Controller
     }
 
     /**
-     * Show publisher details and edit page.
+     * Show user details and edit page (publisher, advertiser, or sub-admin).
      *
      * @param  int  $id
      * @return \Illuminate\View\View
      */
     public function show($id)
     {
-        $user = User::with(['publisher', 'advertiser'])->findOrFail($id);
+        $user = User::with(['publisher', 'advertiser', 'roles'])->findOrFail($id);
         
         // Load publisher stats if publisher
         $publisherStats = null;
@@ -280,16 +375,19 @@ class UsersController extends Controller
     }
 
     /**
-     * Edit user (show edit form for publisher or advertiser).
+     * Edit user (show edit form for publisher, advertiser, or sub-admin).
      *
      * @param  int  $id
      * @return \Illuminate\View\View
      */
     public function edit($id)
     {
-        $user = User::with(['publisher', 'advertiser'])->findOrFail($id);
+        $user = User::with(['publisher', 'advertiser', 'roles'])->findOrFail($id);
         
-        if (($user->isPublisher() && $user->publisher) || ($user->isAdvertiser() && $user->advertiser)) {
+        // Allow editing for publishers, advertisers, and sub-admins
+        if (($user->isPublisher() && $user->publisher) || 
+            ($user->isAdvertiser() && $user->advertiser) || 
+            ($user->role === 'sub-admin' || $user->hasRole('sub-admin'))) {
             return view('dashboard.admin.users.edit', compact('user'));
         }
         
@@ -298,7 +396,7 @@ class UsersController extends Controller
     }
 
     /**
-     * Update user information (publisher or advertiser).
+     * Update user information (publisher, advertiser, or sub-admin).
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
@@ -306,7 +404,30 @@ class UsersController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $user = User::with(['publisher', 'advertiser'])->findOrFail($id);
+        $user = User::with(['publisher', 'advertiser', 'roles'])->findOrFail($id);
+        
+        // Handle sub-admin update
+        if ($user->role === 'sub-admin' || $user->hasRole('sub-admin')) {
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+                'username' => 'nullable|string|max:255|unique:users,username,' . $user->id,
+                'phone' => 'nullable|string|max:20',
+                'is_active' => 'required|in:0,1,2,3', // 0=rejected, 1=approved, 2=pending, 3=suspended
+            ]);
+
+            // Update user information including account status
+            $user->update([
+                'name' => $request->name,
+                'email' => $request->email,
+                'username' => $request->username,
+                'phone' => $request->phone,
+                'is_active' => $request->is_active,
+            ]);
+
+            return redirect()->route('dashboard.admin.users.show', $user->id)
+                ->with('success', 'Sub-admin updated successfully.');
+        }
         
         // Handle publisher update
         if ($user->isPublisher() && $user->publisher) {
@@ -400,7 +521,7 @@ class UsersController extends Controller
     }
 
     /**
-     * Suspend user (publisher or advertiser).
+     * Suspend user (publisher, advertiser, or sub-admin).
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
@@ -408,10 +529,15 @@ class UsersController extends Controller
      */
     public function suspend(Request $request, $id)
     {
-        $user = User::with(['publisher', 'advertiser'])->findOrFail($id);
+        $user = User::with(['publisher', 'advertiser', 'roles'])->findOrFail($id);
         
-        if (!$user->isPublisher() && !$user->isAdvertiser()) {
-            return back()->withErrors(['error' => 'User must be a publisher or advertiser.']);
+        // Prevent suspending admin
+        if ($user->hasRole('admin') && !$user->hasRole('sub-admin')) {
+            return back()->withErrors(['error' => 'Admin users cannot be suspended.']);
+        }
+        
+        if (!$user->isPublisher() && !$user->isAdvertiser() && $user->role !== 'sub-admin' && !$user->hasRole('sub-admin')) {
+            return back()->withErrors(['error' => 'User must be a publisher, advertiser, or sub-admin.']);
         }
 
         $request->validate([
@@ -422,6 +548,12 @@ class UsersController extends Controller
         $user->update(['is_active' => 3]);
 
         $userType = '';
+        
+        // Handle sub-admin
+        if ($user->role === 'sub-admin' || $user->hasRole('sub-admin')) {
+            $userType = 'sub-admin';
+            // Sub-admins don't have publisher/advertiser profiles, so we just update the user status
+        }
         
         // Handle publisher
         if ($user->isPublisher() && $user->publisher) {
@@ -453,7 +585,7 @@ class UsersController extends Controller
     }
 
     /**
-     * Block user (publisher or advertiser).
+     * Block user (publisher, advertiser, or sub-admin).
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
@@ -461,10 +593,15 @@ class UsersController extends Controller
      */
     public function block(Request $request, $id)
     {
-        $user = User::with(['publisher', 'advertiser'])->findOrFail($id);
+        $user = User::with(['publisher', 'advertiser', 'roles'])->findOrFail($id);
         
-        if (!$user->isPublisher() && !$user->isAdvertiser()) {
-            return back()->withErrors(['error' => 'User must be a publisher or advertiser.']);
+        // Prevent blocking admin
+        if ($user->hasRole('admin') && !$user->hasRole('sub-admin')) {
+            return back()->withErrors(['error' => 'Admin users cannot be blocked.']);
+        }
+        
+        if (!$user->isPublisher() && !$user->isAdvertiser() && $user->role !== 'sub-admin' && !$user->hasRole('sub-admin')) {
+            return back()->withErrors(['error' => 'User must be a publisher, advertiser, or sub-admin.']);
         }
 
         $request->validate([
