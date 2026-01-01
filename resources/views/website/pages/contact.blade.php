@@ -4,6 +4,61 @@
 
 @section('description', 'Get in touch with our team for support, inquiries, or partnerships')
 
+@push('styles')
+<style>
+    /* Form input fields - consistent styling */
+    .form-group input[type="text"],
+    .form-group input[type="email"] {
+        width: 100%;
+        padding: 12px 16px;
+        background-color: var(--bg-light);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 14px;
+        color: var(--text-dark);
+        transition: var(--transition);
+    }
+
+    .form-group input[type="text"]:focus,
+    .form-group input[type="email"]:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        background-color: white;
+        box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.1);
+    }
+
+    .form-group input[type="text"]::placeholder,
+    .form-group input[type="email"]::placeholder {
+        color: var(--text-light);
+    }
+
+    /* Textarea fields - ensure consistency */
+    .form-group textarea {
+        width: 100%;
+        padding: 12px 16px;
+        background-color: var(--bg-light);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 14px;
+        resize: vertical;
+        transition: var(--transition);
+    }
+
+    .form-group textarea:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        background-color: white;
+        box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.1);
+    }
+
+    .form-group textarea::placeholder {
+        color: var(--text-light);
+    }
+</style>
+@endpush
+
 @section('content')
     <section class="section" style="padding-top: 100px;">
         <div class="container" style="width: 90%; max-width: none; margin: 0 auto;">
@@ -68,7 +123,7 @@
                         </div>
                         <div class="form-group">
                             <label for="message">Message</label>
-                            <textarea id="message" name="message" rows="6" style="width: 100%; padding: 12px 16px; background-color: var(--bg-light); border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; font-size: 14px; resize: vertical;" placeholder="Enter your message" required></textarea>
+                            <textarea id="message" name="message" rows="6" placeholder="Enter your message" required></textarea>
                         </div>
                         <button type="submit" class="btn btn-primary" style="align-self: flex-start;">Send Message</button>
                     </form>
