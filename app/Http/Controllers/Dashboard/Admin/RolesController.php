@@ -26,11 +26,19 @@ class RolesController extends Controller
      */
     public function create()
     {
-        $permissions = Permission::all()->groupBy(function ($permission) {
+        $allPermissions = Permission::all();
+        
+        // Check if permissions exist
+        if ($allPermissions->isEmpty()) {
+            // Return empty collection grouped (will show warning in view)
+            $permissions = collect();
+        } else {
             // Group permissions by their prefix (e.g., 'manage_', 'view_', 'approve_')
-            $parts = explode('_', $permission->slug);
-            return $parts[0] ?? 'other';
-        });
+            $permissions = $allPermissions->groupBy(function ($permission) {
+                $parts = explode('_', $permission->slug);
+                return $parts[0] ?? 'other';
+            });
+        }
         
         return view('dashboard.admin.roles.create', compact('permissions'));
     }
@@ -89,13 +97,22 @@ class RolesController extends Controller
                 ->withErrors(['error' => 'The admin role cannot be edited.']);
         }
 
-        $permissions = Permission::all()->groupBy(function ($permission) {
-            $parts = explode('_', $permission->slug);
-            return $parts[0] ?? 'other';
-        });
-        
         $role->load('permissions');
         $selectedPermissions = $role->permissions->pluck('id')->toArray();
+        
+        $allPermissions = Permission::all();
+        
+        // Check if permissions exist
+        if ($allPermissions->isEmpty()) {
+            // Return empty collection grouped (will show warning in view)
+            $permissions = collect();
+        } else {
+            // Group permissions by their prefix (e.g., 'manage_', 'view_', 'approve_')
+            $permissions = $allPermissions->groupBy(function ($permission) {
+                $parts = explode('_', $permission->slug);
+                return $parts[0] ?? 'other';
+            });
+        }
         
         return view('dashboard.admin.roles.edit', compact('role', 'permissions', 'selectedPermissions'));
     }

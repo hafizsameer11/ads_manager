@@ -420,3 +420,16 @@ Route::get('/migrate/rollback', function () {
     Artisan::call('migrate:rollback');
     return response()->json(['message' => 'Migration rollback successfully'], 200);
 });
+Route::get('/seed/roles-permissions', function () {
+    // 🔒 HARD STOP for non-production control
+    abort_if(!app()->environment('production'), 403, 'Not allowed');
+
+    Artisan::call('db:seed', [
+        '--class' => 'RolesAndPermissionsSeeder',
+        '--force' => true // required in production
+    ]);
+
+    return response()->json([
+        'message' => 'Roles and Permissions seeded successfully'
+    ], 200);
+});

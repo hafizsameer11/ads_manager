@@ -46,22 +46,32 @@
                 <div class="form-group">
                     <label>Permissions</label>
                     <div class="permissions-container" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 15px; border-radius: 4px;">
-                        @foreach($permissions as $group => $groupPermissions)
-                            <div class="permission-group mb-3">
-                                <strong style="text-transform: capitalize;">{{ $group }}</strong>
-                                <div class="mt-2 ml-3">
-                                    @foreach($groupPermissions as $permission)
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" id="permission_{{ $permission->id }}" name="permissions[]" value="{{ $permission->id }}" {{ in_array($permission->id, $selectedPermissions) ? 'checked' : '' }}>
-                                            <label class="form-check-label" for="permission_{{ $permission->id }}">
-                                                {{ $permission->name }}
-                                                <small class="text-muted">({{ $permission->slug }})</small>
-                                            </label>
-                                        </div>
-                                    @endforeach
+                        @if(count($permissions) > 0)
+                            @foreach($permissions as $group => $groupPermissions)
+                                <div class="permission-group mb-3">
+                                    <strong style="text-transform: capitalize;">{{ $group }}</strong>
+                                    <div class="mt-2 ml-3">
+                                        @foreach($groupPermissions as $permission)
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" id="permission_{{ $permission->id }}" name="permissions[]" value="{{ $permission->id }}" {{ in_array($permission->id, $selectedPermissions) ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="permission_{{ $permission->id }}">
+                                                    {{ $permission->name }}
+                                                    <small class="text-muted">({{ $permission->slug }})</small>
+                                                </label>
+                                            </div>
+                                        @endforeach
+                                    </div>
                                 </div>
+                            @endforeach
+                        @else
+                            <div class="alert alert-warning">
+                                <strong><i class="fas fa-exclamation-triangle"></i> No Permissions Found!</strong>
+                                <p class="mb-0 mt-2">The permissions table is empty. Please run the seeder to populate permissions:</p>
+                                <code style="display: block; margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                                    php artisan db:seed --class=RolesAndPermissionsSeeder
+                                </code>
                             </div>
-                        @endforeach
+                        @endif
                     </div>
                 </div>
 
