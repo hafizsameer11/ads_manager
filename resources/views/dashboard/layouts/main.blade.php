@@ -4,6 +4,7 @@
     @include('dashboard.layouts.head')
 </head>
 <body>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     <div class="dashboard-wrapper">
         @include('dashboard.layouts.sidebar')
         

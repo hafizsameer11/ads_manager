@@ -13,6 +13,7 @@
         initMobileMenu();
         initAlertDismiss();
         initNotificationDropdown();
+        initMobileSidebarLinks();
     });
 
     /**
@@ -24,15 +25,23 @@
 
         if (sidebarToggle && sidebar) {
             sidebarToggle.addEventListener('click', function() {
-                sidebar.classList.toggle('collapsed');
-                // Save state to localStorage
-                localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+                // On mobile, toggle mobile menu
+                if (window.innerWidth <= 768) {
+                    toggleMobileSidebar();
+                } else {
+                    // On desktop, toggle collapsed state
+                    sidebar.classList.toggle('collapsed');
+                    // Save state to localStorage
+                    localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+                }
             });
 
-            // Restore sidebar state from localStorage
-            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-            if (isCollapsed) {
-                sidebar.classList.add('collapsed');
+            // Restore sidebar state from localStorage (desktop only)
+            if (window.innerWidth > 768) {
+                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                if (isCollapsed) {
+                    sidebar.classList.add('collapsed');
+                }
             }
         }
     }
@@ -63,29 +72,106 @@
      * Mobile Menu Toggle
      */
     function initMobileMenu() {
-        const sidebarToggle = document.getElementById('sidebarToggle');
         const sidebar = document.querySelector('.dashboard-sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
 
-        if (sidebarToggle && sidebar && window.innerWidth <= 768) {
-            sidebarToggle.addEventListener('click', function() {
-                sidebar.classList.toggle('mobile-open');
-            });
+        if (!sidebar) return;
 
-            // Close mobile menu when clicking outside
-            document.addEventListener('click', function(e) {
-                if (sidebar.classList.contains('mobile-open') && 
-                    !sidebar.contains(e.target) && 
-                    !sidebarToggle.contains(e.target)) {
-                    sidebar.classList.remove('mobile-open');
-                }
+        // Close mobile menu when clicking overlay
+        if (overlay) {
+            overlay.addEventListener('click', function() {
+                closeMobileSidebar();
             });
         }
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(e) {
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            if (sidebar.classList.contains('mobile-open') && 
+                !sidebar.contains(e.target) && 
+                sidebarToggle && !sidebarToggle.contains(e.target) &&
+                overlay && !overlay.contains(e.target)) {
+                closeMobileSidebar();
+            }
+        });
 
         // Handle window resize
         window.addEventListener('resize', function() {
             if (window.innerWidth > 768) {
-                sidebar.classList.remove('mobile-open');
+                closeMobileSidebar();
             }
+        });
+    }
+
+    /**
+     * Toggle Mobile Sidebar
+     */
+    function toggleMobileSidebar() {
+        const sidebar = document.querySelector('.dashboard-sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        const body = document.body;
+
+        if (!sidebar) return;
+
+        if (sidebar.classList.contains('mobile-open')) {
+            closeMobileSidebar();
+        } else {
+            openMobileSidebar();
+        }
+    }
+
+    /**
+     * Open Mobile Sidebar
+     */
+    function openMobileSidebar() {
+        const sidebar = document.querySelector('.dashboard-sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        const body = document.body;
+
+        if (sidebar) {
+            sidebar.classList.add('mobile-open');
+            if (overlay) {
+                overlay.classList.add('active');
+            }
+            if (body) {
+                body.classList.add('sidebar-open');
+            }
+        }
+    }
+
+    /**
+     * Close Mobile Sidebar
+     */
+    function closeMobileSidebar() {
+        const sidebar = document.querySelector('.dashboard-sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        const body = document.body;
+
+        if (sidebar) {
+            sidebar.classList.remove('mobile-open');
+            if (overlay) {
+                overlay.classList.remove('active');
+            }
+            if (body) {
+                body.classList.remove('sidebar-open');
+            }
+        }
+    }
+
+    /**
+     * Close mobile sidebar when clicking on navigation links
+     */
+    function initMobileSidebarLinks() {
+        const sidebar = document.querySelector('.dashboard-sidebar');
+        if (!sidebar) return;
+
+        const navLinks = sidebar.querySelectorAll('.nav-link, .nav-sublink, .sidebar-link');
+        navLinks.forEach(function(link) {
+            link.addEventListener('click', function() {
+                if (window.innerWidth <= 768) {
+                    closeMobileSidebar();
+                }
+            });
         });
     }
 

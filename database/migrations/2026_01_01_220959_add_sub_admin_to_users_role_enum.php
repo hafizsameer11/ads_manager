@@ -25,7 +25,7 @@ return new class extends Migration
         // Remove 'sub-admin' from the ENUM
         // First, update any existing sub-admin users to 'admin' (temporary)
         DB::statement("UPDATE `users` SET `role` = 'admin' WHERE `role` = 'sub-admin'");
-        
+
         // Then modify the ENUM back to original
         DB::statement("ALTER TABLE `users` MODIFY COLUMN `role` ENUM('admin', 'publisher', 'advertiser') DEFAULT 'advertiser'");
     }

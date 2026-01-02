@@ -255,15 +255,114 @@
         .charts-grid {
             grid-template-columns: 1fr;
         }
+        
+        .grid-2 {
+            grid-template-columns: 1fr;
+        }
     }
     
     @media (max-width: 768px) {
         .stats-grid {
             grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+        
+        .stat-card {
+            padding: 0.875rem;
+        }
+        
+        .stat-value {
+            font-size: 1.25rem;
+        }
+        
+        .stat-label {
+            font-size: 0.7rem;
+        }
+        
+        .stat-change {
+            font-size: 0.7rem;
         }
         
         .grid-2 {
             grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        
+        .charts-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        
+        .chart-card {
+            padding: 1rem;
+        }
+        
+        .chart-container {
+            height: 250px;
+        }
+        
+        .card {
+            margin-bottom: 1rem;
+        }
+        
+        .card-header {
+            padding: 1rem;
+        }
+        
+        .card-body {
+            padding: 1rem;
+        }
+        
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .table {
+            min-width: 600px;
+            font-size: 0.875rem;
+        }
+        
+        .table thead th {
+            padding: 0.5rem;
+            font-size: 0.75rem;
+        }
+        
+        .table tbody td {
+            padding: 0.75rem 0.5rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .stat-card {
+            padding: 0.75rem;
+        }
+        
+        .stat-value {
+            font-size: 1.125rem;
+        }
+        
+        .stat-icon {
+            width: 36px;
+            height: 36px;
+            font-size: 1rem;
+        }
+        
+        .chart-container {
+            height: 200px;
+        }
+        
+        .card-header {
+            padding: 0.75rem;
+        }
+        
+        .card-body {
+            padding: 0.75rem;
+        }
+        
+        .table {
+            min-width: 500px;
+            font-size: 0.8rem;
         }
     }
 </style>
