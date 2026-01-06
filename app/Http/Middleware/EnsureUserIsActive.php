@@ -19,21 +19,13 @@ class EnsureUserIsActive
             return redirect()->route('login');
         }
 
-        // Only allow access if user is approved (is_active == 1)
+        // Only block suspended users (is_active == 3)
+        // 1 = active/approved, 3 = suspended/blocked
         $user = auth()->user();
-        if ($user->is_active != 1) {
-            $isActive = $user->is_active;
+        if ($user->is_active == 3) {
             auth()->logout();
-            
-            if ($isActive == 0) {
-                $message = 'Your account has been rejected. Please contact support.';
-            } elseif ($isActive == 2) {
-                $message = 'Your account is pending approval. Please wait for admin approval.';
-            } else {
-                $message = 'Your account is not active. Please contact support.';
-            }
             return redirect()->route('login')
-                ->withErrors(['email' => $message]);
+                ->withErrors(['email' => 'Your account has been suspended. Please contact support.']);
         }
 
         return $next($request);

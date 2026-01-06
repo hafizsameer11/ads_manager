@@ -102,45 +102,32 @@ class SitesController extends Controller
 
         // Generate verification code
         $verificationCode = Website::generateVerificationCode();
-
-        // Check if auto-approval is enabled
-        $autoApprove = Setting::get('auto_approve_publisher_websites', false);
         
         // Normalize domain for storage
         $normalizedDomain = self::normalizeDomainForStorage($request->domain);
         
+        // Websites always require admin approval
         $websiteData = [
             'publisher_id' => $publisher->id,
             'domain' => $normalizedDomain,
             'name' => $request->name,
             'verification_method' => $request->verification_method,
             'verification_code' => $verificationCode,
+            'status' => 'pending', // Always pending - requires admin approval
         ];
-        
-        if ($autoApprove) {
-            $websiteData['status'] = 'approved';
-            $websiteData['approved_at'] = now();
-            $websiteData['verified_at'] = now();
-        } else {
-            $websiteData['status'] = 'pending';
-        }
 
         $website = Website::create($websiteData);
 
-        if ($autoApprove) {
-            return back()->with('success', 'Website added and automatically approved!');
-        } else {
-            // Notify admin about new website submission
-            \App\Services\NotificationService::notifyAdmins(
-                'website_added',
-                'general',
-                'New Website Added',
-                "A new website '{$website->name}' ({$website->domain}) has been added by {$publisher->user->name} and is pending approval.",
-                ['website_id' => $website->id, 'publisher_id' => $publisher->id, 'domain' => $website->domain]
-            );
-            
-            return back()->with('success', 'Website added successfully. Please verify your domain ownership to get approved.');
-        }
+        // Notify admin about new website submission
+        \App\Services\NotificationService::notifyAdmins(
+            'website_added',
+            'general',
+            'New Website Added',
+            "A new website '{$website->name}' ({$website->domain}) has been added by {$publisher->user->name} and is pending approval.",
+            ['website_id' => $website->id, 'publisher_id' => $publisher->id, 'domain' => $website->domain]
+        );
+        
+        return back()->with('success', 'Website added successfully. Please verify your domain ownership to get approved.');
     }
 
     /**

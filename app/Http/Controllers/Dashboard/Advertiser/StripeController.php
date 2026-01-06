@@ -42,9 +42,9 @@ class StripeController extends Controller
                 ->withErrors(['error' => 'Advertiser profile not found.']);
         }
 
-        if ($user->is_active !== 1) {
+        if ($user->is_active === 3) {
             return redirect()->route('dashboard.advertiser.billing')
-                ->withErrors(['error' => 'Your account must be approved to make deposits.']);
+                ->withErrors(['error' => 'Your account has been suspended. Please contact support.']);
         }
 
         // Check if Stripe is enabled

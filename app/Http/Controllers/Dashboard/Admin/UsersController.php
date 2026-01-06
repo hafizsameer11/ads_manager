@@ -147,14 +147,10 @@ class UsersController extends Controller
             $query->where('role', $request->role);
         }
         
-        // Filter by account status: 1 = Approved, 0 = Rejected, 2 = Pending, 3 = Suspended
+        // Filter by account status: 1 = Active, 3 = Suspended
         if ($request->filled('status')) {
-            if ($request->status === 'approved') {
+            if ($request->status === 'active' || $request->status === 'approved') {
                 $query->where('is_active', 1);
-            } elseif ($request->status === 'rejected') {
-                $query->where('is_active', 0);
-            } elseif ($request->status === 'pending') {
-                $query->where('is_active', 2);
             } elseif ($request->status === 'suspended') {
                 $query->where('is_active', 3);
             }
@@ -181,102 +177,16 @@ class UsersController extends Controller
             'publishers' => User::where('role', 'publisher')->count(),
             'advertisers' => User::where('role', 'advertiser')->count(),
             'admins' => $adminRole ? $adminRole->users()->count() : 0,
-            'approved' => User::whereDoesntHave('roles', function($q) { $q->where('slug', 'admin'); })->where('is_active', 1)->count(),
-            'rejected' => User::whereDoesntHave('roles', function($q) { $q->where('slug', 'admin'); })->where('is_active', 0)->count(),
-            'pending' => User::whereDoesntHave('roles', function($q) { $q->where('slug', 'admin'); })->where('is_active', 2)->count(),
+            'active' => User::whereDoesntHave('roles', function($q) { $q->where('slug', 'admin'); })->where('is_active', 1)->count(),
+            'suspended' => User::whereDoesntHave('roles', function($q) { $q->where('slug', 'admin'); })->where('is_active', 3)->count(),
         ];
         
         return view('dashboard.admin.users', compact('users', 'stats'));
     }
 
     /**
-     * Approve publisher or advertiser.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function approve($id)
-    {
-        $user = User::findOrFail($id);
-
-        // Update account status to approved
-        $user->update(['is_active' => 1]);
-        
-        // Update publisher/advertiser approved_at timestamp if they exist
-        if ($user->role === 'publisher' && $user->publisher) {
-            $user->publisher->update(['approved_at' => now()]);
-            
-            // Send email notification
-            Mail::to($user->email)->send(new UserApprovedMail($user));
-            
-            // Also create in-app notification
-            $this->notificationService->notifyPublisherApproval($user, 'approved');
-            
-            // Log activity
-            ActivityLogService::logUserApproved($user, Auth::user());
-            
-            return back()->with('success', 'Publisher approved successfully.');
-        } elseif ($user->role === 'advertiser' && $user->advertiser) {
-            $user->advertiser->update(['approved_at' => now()]);
-            
-            // Send email notification
-            Mail::to($user->email)->send(new UserApprovedMail($user));
-            
-            // Also create in-app notification
-            \App\Services\NotificationService::notifyAdvertiserApproval($user, 'approved');
-            
-            // Log activity
-            ActivityLogService::logUserApproved($user, Auth::user());
-            
-            return back()->with('success', 'Advertiser approved successfully.');
-        }
-
-        return back()->withErrors(['error' => 'User cannot be approved.']);
-    }
-
-    /**
-     * Reject publisher or advertiser.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function reject($id)
-    {
-        $user = User::findOrFail($id);
-
-        // Update account status to rejected
-        $user->update(['is_active' => 0]);
-        
-        if ($user->role === 'publisher' && $user->publisher) {
-            // Send email notification
-            Mail::to($user->email)->send(new UserRejectedMail($user));
-            
-            // Also create in-app notification
-            $this->notificationService->notifyPublisherApproval($user, 'rejected');
-            
-            // Log activity
-            ActivityLogService::logUserRejected($user, Auth::user());
-            
-            return back()->with('success', 'Publisher rejected.');
-        } elseif ($user->role === 'advertiser' && $user->advertiser) {
-            // Send email notification
-            Mail::to($user->email)->send(new UserRejectedMail($user));
-            
-            // Also create in-app notification
-            \App\Services\NotificationService::notifyAdvertiserApproval($user, 'rejected');
-            
-            // Log activity
-            ActivityLogService::logUserRejected($user, Auth::user());
-            
-            return back()->with('success', 'Advertiser rejected.');
-        }
-
-        return back()->withErrors(['error' => 'User cannot be rejected.']);
-    }
-
-    /**
      * Toggle user account status.
-     * Cycles through: Pending (2) -> Approved (1) -> Suspended (3) -> Rejected (0) -> Approved (1)
+     * Cycles between: Active (1) <-> Suspended (3)
      *
      * @param  int  $id
      * @return \Illuminate\Http\RedirectResponse
@@ -290,23 +200,15 @@ class UsersController extends Controller
             return back()->withErrors(['error' => 'You cannot change your own account status.']);
         }
 
-        // Cycle through statuses: 2 (Pending) -> 1 (Approved) -> 3 (Suspended) -> 0 (Rejected) -> 1 (Approved)
-        if ($user->is_active == 2) {
-            // Pending -> Approved
-            $newStatus = 1;
-            $statusText = 'approved';
-        } elseif ($user->is_active == 1) {
-            // Approved -> Suspended
+        // Toggle between Active (1) and Suspended (3)
+        if ($user->is_active == 1) {
+            // Active -> Suspended
             $newStatus = 3;
             $statusText = 'suspended';
-        } elseif ($user->is_active == 3) {
-            // Suspended -> Rejected
-            $newStatus = 0;
-            $statusText = 'rejected';
         } else {
-            // Rejected -> Approved
+            // Suspended -> Active
             $newStatus = 1;
-            $statusText = 'approved';
+            $statusText = 'activated';
         }
         
         $user->update(['is_active' => $newStatus]);
@@ -413,7 +315,7 @@ class UsersController extends Controller
                 'email' => 'required|email|max:255|unique:users,email,' . $user->id,
                 'username' => 'nullable|string|max:255|unique:users,username,' . $user->id,
                 'phone' => 'nullable|string|max:20',
-                'is_active' => 'required|in:0,1,2,3', // 0=rejected, 1=approved, 2=pending, 3=suspended
+                'is_active' => 'required|in:1,3', // 1=active, 3=suspended
             ]);
 
             // Update user information including account status
@@ -439,7 +341,7 @@ class UsersController extends Controller
                 'tier' => 'required|in:tier1,tier2,tier3',
                 'is_premium' => 'nullable|boolean',
                 'minimum_payout' => 'nullable|numeric|min:0',
-                'is_active' => 'required|in:0,1,2,3', // 0=rejected, 1=approved, 2=pending, 3=suspended
+                'is_active' => 'required|in:1,3', // 1=active, 3=suspended
                 'notes' => 'nullable|string|max:1000',
             ]);
 
@@ -476,7 +378,7 @@ class UsersController extends Controller
                 'email' => 'required|email|max:255|unique:users,email,' . $user->id,
                 'username' => 'nullable|string|max:255|unique:users,username,' . $user->id,
                 'phone' => 'nullable|string|max:20',
-                'is_active' => 'required|in:0,1,2,3', // 0=rejected, 1=approved, 2=pending, 3=suspended
+                'is_active' => 'required|in:1,3', // 1=active, 3=suspended
                 'payment_email' => 'nullable|email|max:255',
                 'payment_info' => 'nullable|string|max:2000',
                 'notes' => 'nullable|string|max:1000',
@@ -608,8 +510,8 @@ class UsersController extends Controller
             'reason' => 'nullable|string|max:500',
         ]);
 
-        // Update account status to rejected
-        $user->update(['is_active' => 0]);
+        // Update account status to suspended (blocked)
+        $user->update(['is_active' => 3]);
 
         $userType = '';
         
@@ -621,7 +523,7 @@ class UsersController extends Controller
                 $notes .= ($notes ? "\n\n" : "") . "[Blocked " . now()->format('Y-m-d H:i') . "] " . $request->reason;
                 $user->publisher->update(['notes' => $notes]);
             }
-            $this->notificationService->notifyPublisherApproval($user, 'rejected', $request->reason);
+            $this->notificationService->notifyPublisherApproval($user, 'suspended', $request->reason);
         }
         
         // Handle advertiser
@@ -632,11 +534,11 @@ class UsersController extends Controller
                 $notes .= ($notes ? "\n\n" : "") . "[Blocked " . now()->format('Y-m-d H:i') . "] " . $request->reason;
                 $user->advertiser->update(['notes' => $notes]);
             }
-            NotificationService::notifyAdvertiserApproval($user, 'rejected', $request->reason);
+            NotificationService::notifyAdvertiserApproval($user, 'suspended', $request->reason);
         }
 
-        // Log activity (blocked is treated as rejected)
-        ActivityLogService::logUserRejected($user, Auth::user(), $request->reason);
+        // Log activity (blocked is treated as suspended)
+        ActivityLogService::logUserSuspended($user, Auth::user(), $request->reason);
 
         return back()->with('success', ucfirst($userType) . ' blocked successfully.');
     }

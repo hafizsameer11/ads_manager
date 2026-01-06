@@ -67,22 +67,24 @@ class RegisterController extends Controller
                 'role' => $request->role,
                 'referral_code' => User::generateReferralCode(),
                 'referred_by' => $referrer?->id,
-                'is_active' => 2, // 2 = Pending (default for new users)
+                'is_active' => 1, // 1 = Approved (auto-approved on registration)
             ]);
 
             // Create role-specific profile
             if ($request->role === 'publisher') {
                 Publisher::create([
                     'user_id' => $user->id,
-                    'status' => 'pending',
+                    'status' => 'approved',
                     'tier' => 'tier3',
+                    'approved_at' => now(),
                 ]);
             } elseif ($request->role === 'advertiser') {
                 Advertiser::create([
                     'user_id' => $user->id,
-                    'status' => 'pending',
+                    'status' => 'approved',
                     'balance' => 0.00,
                     'total_spent' => 0.00,
+                    'approved_at' => now(),
                 ]);
             }
 
@@ -97,9 +99,9 @@ class RegisterController extends Controller
             // Auto-login after registration
             Auth::login($user);
 
-            // Redirect to pending approval page (users are not approved by default)
-            return redirect()->route('pending-approval')
-                    ->with('success', 'Registration successful! Your account is pending approval.');
+            // Redirect to dashboard (users are auto-approved)
+            return redirect()->route('dashboard')
+                    ->with('success', 'Registration successful! Welcome to your dashboard.');
 
         } catch (\Exception $e) {
             DB::rollBack();

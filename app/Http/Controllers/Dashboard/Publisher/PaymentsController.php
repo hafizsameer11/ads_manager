@@ -90,8 +90,8 @@ class PaymentsController extends Controller
             return back()->withErrors(['error' => 'Publisher profile not found.']);
         }
 
-        if ($user->is_active !== 1) {
-            return back()->withErrors(['error' => 'Your account must be approved to make withdrawals.']);
+        if ($user->is_active === 3) {
+            return back()->withErrors(['error' => 'Your account has been suspended. Please contact support.']);
         }
 
         // Check if publisher has sufficient balance

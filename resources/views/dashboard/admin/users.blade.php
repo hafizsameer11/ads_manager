@@ -366,12 +366,9 @@
                         <label class="form-label">Status</label>
                         <select name="status" class="form-control">
                             <option value="">All Status</option>
-                            <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved
+                            <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active
                             </option>
-                            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
                             <option value="suspended" {{ request('status') == 'suspended' ? 'selected' : '' }}>Suspended
-                            </option>
-                            <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected
                             </option>
                         </select>
                     </div>
@@ -422,10 +419,10 @@
                                     $approvalStatus = null;
                                 }
 
-                                // Account status: 1 = Approved, 0 = Rejected, 2 = Pending
+                                // Account status: 1 = Active, 3 = Suspended
                                 // Ensure it's cast to integer for proper comparison
-                                // Default to 2 (Pending) if NULL for backward compatibility
-                                $accountStatus = $user->is_active !== null ? (int) $user->is_active : 2;
+                                // Default to 1 (Active) if NULL
+                                $accountStatus = $user->is_active !== null ? (int) $user->is_active : 1;
                             @endphp
 
                             <tr>
@@ -458,13 +455,9 @@
                                     @php $status = (int) $user->is_active; @endphp
 
                                     @if ($status === 1)
-                                        <span class="badge bg-success">Approved</span>
-                                    @elseif ($status === 2)
-                                        <span class="badge bg-warning text-dark">Pending</span>
+                                        <span class="badge bg-success">Active</span>
                                     @elseif ($status === 3)
                                         <span class="badge bg-warning text-dark">Suspended</span>
-                                    @elseif ($status === 0)
-                                        <span class="badge bg-danger">Rejected</span>
                                     @else
                                         <span class="badge bg-secondary">N/A</span>
                                     @endif
@@ -489,47 +482,23 @@
                                             </a>
                                         @endif
 
-                                        {{-- APPROVE / REJECT (for pending users) --}}
-                                        @if ($accountStatus == 2)
-                                            <form method="POST"
-                                                action="{{ route('dashboard.admin.users.approve', $user->id) }}"
-                                                class="action-form" onsubmit="return confirm('Approve this user?');">
-                                                @csrf
-                                                <button class="btn btn-sm btn-success" title="Approve">
-                                                    <i class="fas fa-check"></i>
+                                        {{-- TOGGLE ACCOUNT STATUS (Active <-> Suspended) --}}
+                                        <form method="POST"
+                                            action="{{ route('dashboard.admin.users.toggle-status', $user->id) }}"
+                                            class="action-form" onsubmit="return confirm('Are you sure?');">
+                                            @csrf
+                                            @if ($accountStatus == 1)
+                                                {{-- Active -> Suspend --}}
+                                                <button class="btn btn-sm btn-warning" title="Suspend">
+                                                    <i class="fas fa-ban"></i>
                                                 </button>
-                                            </form>
-
-                                            <form method="POST"
-                                                action="{{ route('dashboard.admin.users.reject', $user->id) }}"
-                                                class="action-form" onsubmit="return confirm('Reject this user?');">
-                                                @csrf
-                                                <button class="btn btn-sm btn-danger" title="Reject">
-                                                    <i class="fas fa-times"></i>
+                                            @elseif ($accountStatus == 3)
+                                                {{-- Suspended -> Activate --}}
+                                                <button class="btn btn-sm btn-success" title="Activate">
+                                                    <i class="fas fa-check-circle"></i>
                                                 </button>
-                                            </form>
-                                        @endif
-
-
-                                        {{-- TOGGLE ACCOUNT STATUS (only show when not pending, since pending has dedicated approve/reject buttons) --}}
-                                        @if ($accountStatus != 2)
-                                            <form method="POST"
-                                                action="{{ route('dashboard.admin.users.toggle-status', $user->id) }}"
-                                                class="action-form" onsubmit="return confirm('Are you sure?');">
-                                                @csrf
-                                                @if ($accountStatus == 1)
-                                                    {{-- Approved -> Reject --}}
-                                                    <button class="btn btn-sm btn-danger" title="Reject">
-                                                        <i class="fas fa-ban"></i>
-                                                    </button>
-                                                @elseif ($accountStatus == 0)
-                                                    {{-- Rejected -> Approve --}}
-                                                    <button class="btn btn-sm btn-success" title="Approve">
-                                                        <i class="fas fa-check-circle"></i>
-                                                    </button>
-                                                @endif
-                                            </form>
-                                        @endif
+                                            @endif
+                                        </form>
 
                                         {{-- DELETE --}}
                                         @if (!$user->isAdmin())

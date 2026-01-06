@@ -117,8 +117,8 @@ Route::middleware('auth')->group(function () {
 // Pending Approval Page (accessible to authenticated users)
 Route::middleware('auth')->get('/pending-approval', [\App\Http\Controllers\Auth\PendingApprovalController::class, 'index'])->name('pending-approval');
 
-// Dashboard Routes (requires authentication, active status, and approval)
-Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'approved'])->group(function () {
+// Dashboard Routes (requires authentication and active status)
+Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active'])->group(function () {
     // Admin Dashboard Routes (permission-based access)
     Route::prefix('admin')->name('admin.')->group(function () {
         // Dashboard home - accessible to anyone with any admin permission
@@ -137,10 +137,8 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'a
             Route::get('/users/{id}/referrals', [UsersController::class, 'referrals'])->name('users.referrals');
         });
 
-        // User approval/status routes
+        // User status routes (suspend and block only)
         Route::middleware('permission:approve_users')->group(function () {
-            Route::post('/users/{id}/approve', [UsersController::class, 'approve'])->name('users.approve');
-            Route::post('/users/{id}/reject', [UsersController::class, 'reject'])->name('users.reject');
             Route::post('/users/{id}/suspend', [UsersController::class, 'suspend'])->name('users.suspend');
             Route::post('/users/{id}/block', [UsersController::class, 'block'])->name('users.block');
             Route::post('/users/{id}/toggle-status', [UsersController::class, 'toggleStatus'])->name('users.toggle-status');
@@ -385,8 +383,8 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active', 'a
     });
 });
 
-// Default dashboard route (redirects based on user role, requires approval)
-Route::middleware(['auth', 'active', 'approved'])->get('/dashboard', function () {
+// Default dashboard route (redirects based on user role)
+Route::middleware(['auth', 'active'])->get('/dashboard', function () {
     $user = auth()->user();
 
     if ($user->isAdmin()) {
@@ -420,7 +418,7 @@ Route::get('/migrate/rollback', function () {
     Artisan::call('migrate:rollback');
     return response()->json(['message' => 'Migration rollback successfully'], 200);
 });
-Route::get('/seed/roles-permissions', function () {
+Route::get('-/seed/roles-permissions', function () {
     Artisan::call('db:seed', [
         '--class' => 'RolesAndPermissionsSeeder',
         '--force' => true

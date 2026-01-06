@@ -29,12 +29,10 @@ class CampaignService
     public function createCampaign(Advertiser $advertiser, array $campaignData, array $targetingData = []): Campaign
     {
         return DB::transaction(function () use ($advertiser, $campaignData, $targetingData) {
-            // Check if auto-approval is enabled
-            $autoApprove = Setting::get('campaign_auto_approval', false);
-            
+            // Campaigns always require admin approval
             $campaignData['advertiser_id'] = $advertiser->id;
             $campaignData['status'] = 'pending';
-            $campaignData['approval_status'] = $autoApprove ? 'approved' : 'pending';
+            $campaignData['approval_status'] = 'pending'; // Always pending - requires admin approval
 
             // Create campaign
             $campaign = Campaign::create($campaignData);
@@ -46,19 +44,14 @@ class CampaignService
                 ]));
             }
 
-            // If auto-approved, activate campaign
-            if ($autoApprove) {
-                $this->activateCampaign($campaign);
-            } else {
-                // Notify admin about pending campaign
-                $this->notificationService->notifyAdmins(
-                    'campaign_created',
-                    'campaign',
-                    'New Campaign Submitted',
-                    "A new campaign '{$campaign->name}' has been submitted by {$advertiser->user->name} and is pending approval.",
-                    ['campaign_id' => $campaign->id, 'advertiser_id' => $advertiser->id]
-                );
-            }
+            // Notify admin about pending campaign
+            $this->notificationService->notifyAdmins(
+                'campaign_created',
+                'campaign',
+                'New Campaign Submitted',
+                "A new campaign '{$campaign->name}' has been submitted by {$advertiser->user->name} and is pending approval.",
+                ['campaign_id' => $campaign->id, 'advertiser_id' => $advertiser->id]
+            );
 
             return $campaign;
         });

@@ -25,9 +25,9 @@ class CreateCampaignController extends Controller
             return redirect()->route('dashboard.advertiser.home')->with('error', 'Advertiser profile not found.');
         }
         
-        if ($user->is_active !== 1) {
+        if ($user->is_active === 3) {
             return redirect()->route('dashboard.advertiser.home')
-                ->with('error', 'Your account needs to be approved before creating campaigns.');
+                ->with('error', 'Your account has been suspended. Please contact support.');
         }
         
         // Load enabled target countries and devices from database
@@ -71,8 +71,8 @@ class CreateCampaignController extends Controller
             return back()->withErrors(['error' => 'Advertiser profile not found.']);
         }
 
-        if ($user->is_active !== 1) {
-            return back()->withErrors(['error' => 'Your account must be approved to create campaigns.']);
+        if ($user->is_active === 3) {
+            return back()->withErrors(['error' => 'Your account has been suspended. Please contact support.']);
         }
 
         // Check balance

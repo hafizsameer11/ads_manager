@@ -99,20 +99,11 @@ class LoginController extends Controller
 
             $user = Auth::user();
 
-            // Check if user is approved (only is_active == 1 can login)
-            if ($user->is_active != 1) {
+            // Check if user is suspended (is_active == 3)
+            if ($user->is_active == 3) {
                 Auth::logout();
-                $reason = '';
-                if ($user->is_active == 0) {
-                    $message = 'Your account has been rejected. Please contact support.';
-                    $reason = 'Account rejected';
-                } elseif ($user->is_active == 2) {
-                    $message = 'Your account is pending approval. Please wait for admin approval.';
-                    $reason = 'Account pending approval';
-                } else {
-                    $message = 'Your account is not active. Please contact support.';
-                    $reason = 'Account not active';
-                }
+                $message = 'Your account has been suspended. Please contact support.';
+                $reason = 'Account suspended';
                 // Log failed login attempt
                 ActivityLogService::logLoginAttempt($login, false, $reason);
                 return back()->withErrors([

@@ -21,15 +21,17 @@ class EnsureUserIsApproved
 
         $user = auth()->user();
 
-        // Users with admin permissions don't need approval
+        // Users with admin permissions don't need status check
         if ($user->hasAdminPermissions()) {
             return $next($request);
         }
 
-        // Check account status - only allow approved users (is_active == 1)
-        // 0 = rejected, 1 = approved, 2 = pending, 3 = suspended
-        if ($user->is_active != 1) {
-            return redirect()->route('pending-approval');
+        // Check account status - block suspended users (is_active == 3)
+        // 1 = active/approved, 3 = suspended/blocked
+        if ($user->is_active == 3) {
+            auth()->logout();
+            return redirect()->route('login')
+                ->withErrors(['email' => 'Your account has been suspended. Please contact support.']);
         }
 
         return $next($request);

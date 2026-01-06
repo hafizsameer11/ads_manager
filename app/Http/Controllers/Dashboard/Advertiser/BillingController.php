@@ -178,8 +178,8 @@ class BillingController extends Controller
             return back()->withErrors(['error' => 'Advertiser profile not found.']);
         }
 
-        if ($user->is_active !== 1) {
-            return back()->withErrors(['error' => 'Your account must be approved to make deposits.']);
+        if ($user->is_active === 3) {
+            return back()->withErrors(['error' => 'Your account has been suspended. Please contact support.']);
         }
 
         // Automatic payment gateways are handled separately via checkout
