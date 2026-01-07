@@ -72,7 +72,18 @@ class BlogsController extends Controller
 
         // Handle featured image upload
         if ($request->hasFile('featured_image')) {
-            $validated['featured_image'] = $request->file('featured_image')->store('blog-images', 'public');
+            $image = $request->file('featured_image');
+            $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+            $imagePath = 'blog-images/' . $imageName;
+
+            // Ensure directory exists
+            $directory = public_path('storage/blog-images');
+            if (!file_exists($directory)) {
+                mkdir($directory, 0755, true);
+            }
+
+            $image->move($directory, $imageName);
+            $validated['featured_image'] = $imagePath;
         }
 
         // Set author
@@ -142,9 +153,23 @@ class BlogsController extends Controller
         if ($request->hasFile('featured_image')) {
             // Delete old image if exists
             if ($blog->featured_image) {
-                Storage::disk('public')->delete($blog->featured_image);
+                $oldImagePath = public_path('storage/' . $blog->featured_image);
+                if (file_exists($oldImagePath)) {
+                    unlink($oldImagePath);
+                }
             }
-            $validated['featured_image'] = $request->file('featured_image')->store('blog-images', 'public');
+            $image = $request->file('featured_image');
+            $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+            $imagePath = 'blog-images/' . $imageName;
+
+            // Ensure directory exists
+            $directory = public_path('storage/blog-images');
+            if (!file_exists($directory)) {
+                mkdir($directory, 0755, true);
+            }
+
+            $image->move($directory, $imageName);
+            $validated['featured_image'] = $imagePath;
         } else {
             // Keep existing image
             unset($validated['featured_image']);
@@ -196,7 +221,10 @@ class BlogsController extends Controller
 
         // Delete featured image if exists
         if ($blog->featured_image) {
-            Storage::disk('public')->delete($blog->featured_image);
+            $imagePath = public_path('storage/' . $blog->featured_image);
+            if (file_exists($imagePath)) {
+                unlink($imagePath);
+            }
         }
 
         $blog->delete();
@@ -214,13 +242,13 @@ class BlogsController extends Controller
      */
     public function toggleStatus(Request $request, Blog $blog)
     {
-        
+
         $blog->status = $blog->status === 'published' ? 'draft' : 'published';
-        
+
         if ($blog->status === 'published' && empty($blog->published_at)) {
             $blog->published_at = now();
         }
-        
+
         $blog->save();
 
         ActivityLogService::log('blog.status.toggled', "Blog '{$blog->title}' status changed to {$blog->status}", $blog, [

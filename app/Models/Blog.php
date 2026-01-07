@@ -63,12 +63,11 @@ class Blog extends Model
     public function getFeaturedImageUrlAttribute(): ?string
     {
         if ($this->featured_image) {
-            // Check if file exists in storage
-            if (Storage::disk('public')->exists($this->featured_image)) {
-                return Storage::disk('public')->url($this->featured_image);
-            }
-            // Fallback to asset() if Storage::url() doesn't work
-            return asset('storage/' . $this->featured_image);
+            // Since we're using move() to store in public/storage/blog-images/
+            // The path stored is: blog-images/filename.jpg
+            // So we need: asset('storage/blog-images/filename.jpg')
+            $imagePath = str_replace('\\', '/', $this->featured_image);
+            return asset('storage/' . $imagePath);
         }
         return null;
     }
