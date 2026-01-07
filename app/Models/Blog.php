@@ -63,6 +63,11 @@ class Blog extends Model
     public function getFeaturedImageUrlAttribute(): ?string
     {
         if ($this->featured_image) {
+            // Check if file exists in storage
+            if (Storage::disk('public')->exists($this->featured_image)) {
+                return Storage::disk('public')->url($this->featured_image);
+            }
+            // Fallback to asset() if Storage::url() doesn't work
             return asset('storage/' . $this->featured_image);
         }
         return null;
