@@ -230,6 +230,28 @@
                         <span>Pages</span>
                     </a>
                 </li>
+                {{-- Blog Management - Admin always sees, Sub-Admin needs manage_settings permission --}}
+                <li class="nav-item {{ str_contains($currentRoute, 'dashboard.admin.blogs') || str_contains($currentRoute, 'dashboard.admin.blog-categories') ? 'active open' : '' }}">
+                    <a href="#" class="nav-link" onclick="event.preventDefault(); const parent = this.closest('.nav-item'); parent.classList.toggle('open');">
+                        <i class="fas fa-blog"></i>
+                        <span>Blog</span>
+                        <i class="fas fa-chevron-down" style="margin-left: auto; font-size: 10px; transition: transform 0.3s;"></i>
+                    </a>
+                    <ul class="nav-submenu">
+                        <li class="nav-subitem {{ str_contains($currentRoute, 'dashboard.admin.blogs') ? 'active' : '' }}">
+                            <a href="{{ route('dashboard.admin.blogs.index') }}" class="nav-sublink">
+                                <i class="fas fa-newspaper"></i>
+                                <span>Blog Posts</span>
+                            </a>
+                        </li>
+                        <li class="nav-subitem {{ str_contains($currentRoute, 'dashboard.admin.blog-categories') ? 'active' : '' }}">
+                            <a href="{{ route('dashboard.admin.blog-categories.index') }}" class="nav-sublink">
+                                <i class="fas fa-tags"></i>
+                                <span>Categories</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
                 @endif
                 {{-- Support Tickets - Admin always sees, Sub-Admin needs any admin permission --}}
                 @if($isAdmin || ($user && $user->hasAdminPermissions()))

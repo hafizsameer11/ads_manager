@@ -41,6 +41,9 @@ use App\Http\Controllers\Dashboard\Advertiser\ProfileController as AdvertiserPro
 use App\Http\Controllers\Dashboard\Publisher\PublisherController as DashboardPublisherController;
 use App\Http\Controllers\Dashboard\Advertiser\CampaignsController as AdvertiserCampaignsController;
 use App\Http\Controllers\Dashboard\Advertiser\AdvertiserController as DashboardAdvertiserController;
+use App\Http\Controllers\Website\BlogController;
+use App\Http\Controllers\Dashboard\Admin\BlogsController;
+use App\Http\Controllers\Dashboard\Admin\BlogCategoriesController;
 
 // Webhook routes (no auth required)
 Route::post('/webhooks/stripe', [\App\Http\Controllers\Webhook\StripeWebhookController::class, 'handle'])->name('webhooks.stripe');
@@ -89,6 +92,12 @@ Route::prefix('')->name('website.')->group(function () {
 
     // Dynamic pages (Terms, Privacy Policy, etc.)
     Route::get('/page/{slug}', [\App\Http\Controllers\Website\PageController::class, 'show'])->name('page.show');
+});
+
+// Blog routes (public)
+Route::prefix('blog')->name('blog.')->group(function () {
+    Route::get('/', [BlogController::class, 'index'])->name('index');
+    Route::get('/{slug}', [BlogController::class, 'show'])->name('show');
 });
 
 // Authentication Routes (only for guests)
@@ -281,6 +290,11 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['auth', 'active'])->
             Route::resource('announcements', \App\Http\Controllers\Dashboard\Admin\AnnouncementsController::class);
             Route::resource('email-templates', \App\Http\Controllers\Dashboard\Admin\EmailTemplatesController::class);
             Route::resource('pages', \App\Http\Controllers\Dashboard\Admin\PagesController::class);
+
+            // Blog management routes
+            Route::resource('blogs', BlogsController::class);
+            Route::post('/blogs/{blog}/toggle-status', [BlogsController::class, 'toggleStatus'])->name('blogs.toggle-status');
+            Route::resource('blog-categories', BlogCategoriesController::class);
         });
 
         // Support tickets routes (accessible with any admin permission)

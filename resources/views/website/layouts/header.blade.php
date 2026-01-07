@@ -31,6 +31,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a href="{{ route('blog.index') }}" class="nav-link {{ request()->routeIs('blog.*') ? 'active' : '' }}">
+                            Blog
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="{{ route('website.contact') }}" class="nav-link {{ request()->routeIs('website.contact') ? 'active' : '' }}">
                             Contact Us
                         </a>
