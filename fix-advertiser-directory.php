@@ -8,6 +8,25 @@
  * Or upload it to your Laravel root and access via browser (remove after use!)
  */
 
+// Helper function to delete directory recursively
+function deleteDirectory($dir) {
+    if (!file_exists($dir)) {
+        return true;
+    }
+    if (!is_dir($dir)) {
+        return unlink($dir);
+    }
+    foreach (scandir($dir) as $item) {
+        if ($item == '.' || $item == '..') {
+            continue;
+        }
+        if (!deleteDirectory($dir . DIRECTORY_SEPARATOR . $item)) {
+            return false;
+        }
+    }
+    return rmdir($dir);
+}
+
 // Get the base path
 $basePath = __DIR__;
 $oldPath = $basePath . '/resources/views/dashboard/Advertiser';
@@ -38,6 +57,26 @@ if (is_dir($oldPath) && !is_dir($newPath)) {
         echo "✗ ERROR: Failed to rename Advertiser directory\n";
         echo "Please check file permissions\n";
         exit(1);
+    }
+} elseif (is_dir($oldPath) && is_dir($newPath)) {
+    // Both directories exist (shouldn't happen on Linux, but can on Windows)
+    echo "Found both 'Advertiser' and 'advertiser' directories\n";
+    echo "Removing 'Advertiser' directory (capital A)...\n";
+    
+    // On case-sensitive systems, these are different. On Windows, they're the same.
+    // Try to remove the capital one (only on case-sensitive systems)
+    // On Windows, they're the same directory, so we can't delete it
+    if (PHP_OS_FAMILY !== 'Windows') {
+        if (deleteDirectory($oldPath)) {
+            echo "✓ Removed 'Advertiser' directory\n";
+            echo "✓ Using 'advertiser' directory (correct name)\n\n";
+        } else {
+            echo "⚠ Warning: Could not remove 'Advertiser' directory\n";
+            echo "✓ 'advertiser' directory exists (correct name)\n\n";
+        }
+    } else {
+        echo "⚠ Note: On Windows, 'Advertiser' and 'advertiser' are the same directory\n";
+        echo "✓ 'advertiser' directory exists (correct name)\n\n";
     }
 } elseif (is_dir($newPath)) {
     echo "✓ Directory 'advertiser' already exists (correct name)\n\n";
@@ -70,11 +109,31 @@ foreach ($commands as $command => $name) {
     }
 }
 
+// Rebuild Laravel caches
+echo "\nRebuilding Laravel caches...\n";
+
+$rebuildCommands = [
+    'config:cache' => 'Config cache',
+    'route:cache' => 'Route cache',
+    'view:cache' => 'View cache',
+    'optimize' => 'Optimize',
+];
+
+foreach ($rebuildCommands as $command => $name) {
+    $output = [];
+    $returnVar = 0;
+    exec("php artisan $command 2>&1", $output, $returnVar);
+    if ($returnVar === 0) {
+        echo "✓ Rebuilt $name\n";
+    } else {
+        echo "✗ Failed to rebuild $name\n";
+        echo "  Error: " . implode("\n", $output) . "\n";
+    }
+}
+
 echo "\n=== Fix Complete! ===\n";
-echo "Please test the advertiser dashboard now.\n";
-echo "If you still see errors, try:\n";
-echo "  php artisan config:cache\n";
-echo "  php artisan route:cache\n";
-echo "  php artisan view:cache\n";
-echo "  php artisan optimize\n";
+echo "✓ Directory renamed successfully\n";
+echo "✓ All caches cleared and rebuilt\n";
+echo "\nPlease test the advertiser dashboard now:\n";
+echo "  https://adnetwork.hmstech.org/dashboard/advertiser/home\n";
 
